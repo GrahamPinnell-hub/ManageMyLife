@@ -37,9 +37,15 @@ const els = {
   syncCanvasBtn: document.getElementById('syncCanvasBtn'),
   schoolErrorBox: document.getElementById('schoolErrorBox'),
   schoolStatusBox: document.getElementById('schoolStatusBox'),
-  canvasAssignments: document.getElementById('canvasAssignments'),
   canvasAssignmentCount: document.getElementById('canvasAssignmentCount'),
   canvasClassCount: document.getElementById('canvasClassCount'),
+  canvasOverdueCount: document.getElementById('canvasOverdueCount'),
+  canvasTodayCount: document.getElementById('canvasTodayCount'),
+  canvasWeekCount: document.getElementById('canvasWeekCount'),
+  canvasNextDue: document.getElementById('canvasNextDue'),
+  canvasDueToday: document.getElementById('canvasDueToday'),
+  canvasDueThisWeek: document.getElementById('canvasDueThisWeek'),
+  canvasByClass: document.getElementById('canvasByClass'),
   schoolSection: document.getElementById('schoolSection')
 };
 
@@ -236,25 +242,108 @@ async function syncCanvasAssignments() {
 function renderCanvasAssignments() {
   const assignments = Array.isArray(canvasState.assignments) ? canvasState.assignments : [];
   const courseNames = new Set(assignments.map((item) => item.courseName).filter(Boolean));
+  const overdue = assignments.filter((item) => getAssignmentBucket(item) === 'overdue');
+  const dueToday = assignments.filter((item) => getAssignmentBucket(item) === 'today');
+  const dueThisWeek = assignments.filter((item) => {
+    const bucket = getAssignmentBucket(item);
+    return bucket === 'today' || bucket === 'week';
+  });
+
   els.canvasAssignmentCount.textContent = assignments.length + (assignments.length === 1 ? ' assignment' : ' assignments');
   els.canvasClassCount.textContent = courseNames.size + (courseNames.size === 1 ? ' class' : ' classes');
-  els.canvasAssignments.innerHTML = '';
+  els.canvasOverdueCount.textContent = overdue.length + (overdue.length === 1 ? ' overdue' : ' overdue');
+  els.canvasTodayCount.textContent = dueToday.length + (dueToday.length === 1 ? ' due today' : ' due today');
+  els.canvasWeekCount.textContent = dueThisWeek.length + (dueThisWeek.length === 1 ? ' due this week' : ' due this week');
+  els.canvasNextDue.textContent = assignments.length ? formatDueDate(assignments[0].dueAt) : 'No due date yet';
 
+  renderAssignmentList(els.canvasDueToday, dueToday, 'Nothing due today.');
+  renderAssignmentList(els.canvasDueThisWeek, dueThisWeek, 'Nothing due this week.');
+  renderAssignmentsByClass(assignments);
+}
+
+function renderAssignmentList(container, assignments, emptyMessage) {
+  container.innerHTML = '';
   if (!assignments.length) {
-    els.canvasAssignments.innerHTML = '<div class="entry assignment-card"><div class="entry-top"><strong>No Canvas assignments synced yet</strong><span class="mini">Save your Canvas settings and tap sync.</span></div></div>';
+    container.innerHTML = '<div class="entry assignment-card"><div class="entry-top"><strong>' + escapeHtml(emptyMessage) + '</strong><span class="mini">You are clear for this section.</span></div></div>';
     return;
   }
 
   assignments.forEach((assignment) => {
-    const card = document.createElement('div');
-    card.className = 'entry assignment-card';
-    let linkHtml = '';
-    if (assignment.htmlUrl) {
-      linkHtml = '<a class="btn ghost" href="' + escapeHtml(assignment.htmlUrl) + '" target="_blank" rel="noopener noreferrer">Open in Canvas</a>';
-    }
-    card.innerHTML = '<div class="assignment-row"><strong>' + escapeHtml(assignment.name) + '</strong><span class="assignment-meta">' + escapeHtml(assignment.courseName) + '</span><span class="assignment-meta">Due ' + escapeHtml(formatDueDate(assignment.dueAt)) + (assignment.pointsPossible != null ? ' • ' + escapeHtml(String(assignment.pointsPossible)) + ' pts' : '') + '</span></div>' + linkHtml;
-    els.canvasAssignments.appendChild(card);
+    container.appendChild(buildAssignmentCard(assignment));
   });
+}
+
+function renderAssignmentsByClass(assignments) {
+  els.canvasByClass.innerHTML = '';
+  if (!assignments.length) {
+    els.canvasByClass.innerHTML = '<div class="class-card"><strong>No class groups yet</strong><span class="mini">Sync Canvas assignments to fill this area.</span></div>';
+    return;
+  }
+
+  const grouped = {};
+  assignments.forEach((assignment) => {
+    const key = assignment.courseName || 'Canvas course';
+    if (!grouped[key]) {
+      grouped[key] = [];
+    }
+    grouped[key].push(assignment);
+  });
+
+  Object.keys(grouped).sort().forEach((courseName) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'class-card';
+    const title = document.createElement('strong');
+    title.textContent = courseName;
+    wrap.appendChild(title);
+
+    grouped[courseName].slice(0, 6).forEach((assignment) => {
+      wrap.appendChild(buildAssignmentCard(assignment));
+    });
+
+    els.canvasByClass.appendChild(wrap);
+  });
+}
+
+function buildAssignmentCard(assignment) {
+  const bucket = getAssignmentBucket(assignment);
+  const card = document.createElement('div');
+  card.className = 'entry assignment-card' + (bucket === 'overdue' ? ' overdue' : bucket === 'today' ? ' today' : '');
+
+  let buttonHtml = '';
+  if (assignment.htmlUrl) {
+    buttonHtml = '<a class="btn ghost" href="' + escapeHtml(assignment.htmlUrl) + '" target="_blank" rel="noopener noreferrer">Open in Canvas</a>';
+  }
+
+  card.innerHTML = '<div class="assignment-row"><span class="assignment-tag ' + bucket + '">' + escapeHtml(getBucketLabel(bucket)) + '</span><strong>' + escapeHtml(assignment.name) + '</strong><span class="assignment-meta">' + escapeHtml(assignment.courseName) + '</span><span class="assignment-meta">Due ' + escapeHtml(formatDueDate(assignment.dueAt)) + (assignment.pointsPossible != null ? ' • ' + escapeHtml(String(assignment.pointsPossible)) + ' pts' : '') + '</span></div>' + buttonHtml;
+  return card;
+}
+
+function getAssignmentBucket(assignment) {
+  const due = new Date(assignment.dueAt);
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrowStart = new Date(todayStart);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+  const weekEnd = new Date(todayStart);
+  weekEnd.setDate(weekEnd.getDate() + 7);
+
+  if (due < now) {
+    return 'overdue';
+  }
+  if (due >= todayStart && due < tomorrowStart) {
+    return 'today';
+  }
+  if (due < weekEnd) {
+    return 'week';
+  }
+  return 'later';
+}
+
+function getBucketLabel(bucket) {
+  if (bucket === 'overdue') return 'Overdue';
+  if (bucket === 'today') return 'Today';
+  if (bucket === 'week') return 'This week';
+  return 'Later';
 }
 
 function loadCanvasSettings() {
@@ -443,4 +532,3 @@ function showStatus(message) {
 }
 
 init();
-
