@@ -49,7 +49,7 @@
           <button class="dashboard-tile active" type="button" data-target="schoolSection">
             <span class="tile-kicker">Live now</span>
             <strong>School assignments</strong>
-            <span class="tile-copy">Paste your Canvas token once, then sync upcoming work.</span>
+            <span class="tile-copy">Sync Canvas, then sort your work by urgency and class.</span>
           </button>
           <button class="dashboard-tile" type="button" data-target="choresSection">
             <span class="tile-kicker">Tomorrow</span>
@@ -218,17 +218,64 @@
           </div>
 
           <div class="school-summary-grid">
-            <div class="overview-item">
+            <div class="overview-item urgency-card overdue">
+              <strong id="canvasOverdueCount">0 overdue</strong>
+              <span>Assignments already past due</span>
+            </div>
+            <div class="overview-item urgency-card today">
+              <strong id="canvasTodayCount">0 due today</strong>
+              <span>Things to handle before the day ends</span>
+            </div>
+            <div class="overview-item urgency-card week">
+              <strong id="canvasWeekCount">0 due this week</strong>
+              <span>Upcoming work due within 7 days</span>
+            </div>
+            <div class="overview-item urgency-card normal">
               <strong id="canvasAssignmentCount">0 assignments</strong>
               <span>Upcoming work pulled from Canvas</span>
             </div>
+          </div>
+
+          <div class="school-summary-grid two-up">
             <div class="overview-item">
               <strong id="canvasClassCount">0 classes</strong>
               <span>Classes represented in the synced list</span>
             </div>
+            <div class="overview-item">
+              <strong id="canvasNextDue">No due date yet</strong>
+              <span>Next assignment deadline</span>
+            </div>
           </div>
 
-          <div class="entries" id="canvasAssignments"></div>
+          <div class="school-block">
+            <div class="section-head compact-head">
+              <div>
+                <h3>Due today</h3>
+                <p class="mini">The most urgent work first.</p>
+              </div>
+            </div>
+            <div class="entries" id="canvasDueToday"></div>
+          </div>
+
+          <div class="school-block">
+            <div class="section-head compact-head">
+              <div>
+                <h3>Due this week</h3>
+                <p class="mini">Everything due in the next 7 days.</p>
+              </div>
+            </div>
+            <div class="entries" id="canvasDueThisWeek"></div>
+          </div>
+
+          <div class="school-block">
+            <div class="section-head compact-head">
+              <div>
+                <h3>By class</h3>
+                <p class="mini">Grouped so you can knock work out class by class.</p>
+              </div>
+            </div>
+            <div class="class-groups" id="canvasByClass"></div>
+          </div>
         </div>
       </section>
 

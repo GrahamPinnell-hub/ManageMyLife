@@ -9,6 +9,9 @@
   --accent-soft: #d7ebe6;
   --border: rgba(23, 20, 18, 0.14);
   --danger: #9e2f2f;
+  --warning: #b36b00;
+  --warning-soft: #fff3dd;
+  --danger-soft: #fff0f0;
 }
 
 * { box-sizing: border-box; }
@@ -51,7 +54,7 @@ body {
   gap: 14px;
 }
 
-h1, h2, p {
+h1, h2, h3, p {
   margin: 0;
 }
 
@@ -62,6 +65,11 @@ h1 {
 
 h2 {
   font-size: 1.08rem;
+  line-height: 1.2;
+}
+
+h3 {
+  font-size: 0.96rem;
   line-height: 1.2;
 }
 
@@ -94,9 +102,15 @@ h2 {
 .entries,
 .totals-stack,
 .hero-stats,
-.overview-list {
+.overview-list,
+.class-groups,
+.school-block {
   display: grid;
   gap: 12px;
+}
+
+.compact-head {
+  gap: 6px;
 }
 
 .hero-stats,
@@ -105,10 +119,15 @@ h2 {
   grid-template-columns: 1fr;
 }
 
+.school-summary-grid.two-up {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .hero-stat,
 .total,
 .overall,
-.overview-item {
+.overview-item,
+.class-card {
   background: white;
   border: 1px solid var(--border);
   border-radius: 18px;
@@ -121,6 +140,14 @@ h2 {
 .total strong,
 .overall strong {
   font-size: 1.55rem;
+}
+
+.urgency-card.overdue {
+  background: var(--danger-soft);
+}
+
+.urgency-card.today {
+  background: var(--warning-soft);
 }
 
 .dashboard-grid {
@@ -160,7 +187,8 @@ h2 {
 }
 
 .dashboard-tile strong,
-.overview-item strong {
+.overview-item strong,
+.class-card strong {
   font-size: 0.95rem;
 }
 
@@ -299,6 +327,16 @@ textarea {
   background: linear-gradient(180deg, #ffffff 0%, #fbf7f0 100%);
 }
 
+.assignment-card.overdue {
+  border-color: rgba(158, 47, 47, 0.28);
+  background: linear-gradient(180deg, #fff4f4 0%, #fff9f9 100%);
+}
+
+.assignment-card.today {
+  border-color: rgba(179, 107, 0, 0.24);
+  background: linear-gradient(180deg, #fff7e8 0%, #fffdf9 100%);
+}
+
 .assignment-meta {
   color: var(--muted);
   font-size: 0.78rem;
@@ -308,6 +346,33 @@ textarea {
 .assignment-row {
   display: grid;
   gap: 4px;
+}
+
+.assignment-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.assignment-tag.overdue {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.assignment-tag.today {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.assignment-tag.week {
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
 .placeholder-card {
