@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f6c5d">
+    <title>DSG Hours</title>
+    <link rel="manifest" href="./manifest.json">
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="shell">
+      <section class="card" id="appCard">
+        <div class="top">
+          <div>
+            <h1>DSG Hours</h1>
+            <p class="sub">Log your hours here, then open the Google Doc and print from there.</p>
+          </div>
+          <div class="totals-stack">
+            <div class="total">
+              <span class="mini">Current month total</span>
+              <strong id="monthTotal">0.0 hrs</strong>
+              <span id="monthLabel" class="mini"></span>
+            </div>
+            <div class="overall">
+              <span class="mini">All-time total</span>
+              <strong id="overallTotal">0.0 hrs</strong>
+              <span class="mini">Everything you have logged so far</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="errorBox" class="error"></div>
+        <div id="statusBox" class="status"></div>
+
+        <div class="stack section-gap">
+          <div class="button-stack">
+            <button class="btn secondary" id="redeemerBtn" type="button">Use Redeemer Church</button>
+            <button class="btn ghost" id="saveProfileBtn" type="button">Save project info</button>
+            <a class="btn ghost" id="workingDocLink" href="#" target="_blank" rel="noopener noreferrer">Open Google Doc</a>
+          </div>
+
+          <label class="field">Location
+            <input id="location" type="text">
+          </label>
+
+          <label class="field">Organization
+            <input id="organization" type="text">
+          </label>
+
+          <label class="field">Description
+            <textarea id="description"></textarea>
+          </label>
+
+          <label class="field">Date
+            <input id="date" type="date">
+          </label>
+
+          <div class="control-box">
+            <label>Hours
+              <input class="hours-value" id="hours" type="text" readonly>
+            </label>
+            <div class="stepper">
+              <button class="step" id="minusBtn" type="button">-</button>
+              <div></div>
+              <button class="step" id="plusBtn" type="button">+</button>
+            </div>
+            <div class="chip-grid">
+              <button class="chip hour-chip" type="button" data-hours="0.5">0.5</button>
+              <button class="chip hour-chip" type="button" data-hours="1">1</button>
+              <button class="chip hour-chip" type="button" data-hours="1.5">1.5</button>
+              <button class="chip hour-chip" type="button" data-hours="2">2</button>
+              <button class="chip hour-chip" type="button" data-hours="2.5">2.5</button>
+              <button class="chip hour-chip" type="button" data-hours="3">3</button>
+            </div>
+          </div>
+
+          <div class="control-box">
+            <label>Activity
+              <input id="activity" type="text" readonly>
+            </label>
+            <div class="chip-grid">
+              <button class="chip activity-chip" type="button" data-activity="Sunday school service">Sunday school</button>
+              <button class="chip activity-chip" type="button" data-activity="Middle school assistant small group leader">Small group</button>
+              <button class="chip activity-chip" type="button" data-activity="Chicago missions hamburger fundraiser">Fundraiser</button>
+              <button class="chip activity-chip" type="button" data-activity="Church volunteering">General church</button>
+            </div>
+          </div>
+
+          <div class="button-stack">
+            <button class="btn primary" id="saveEntryBtn" type="button">Add hours</button>
+            <button class="btn ghost" id="resetBtn" type="button">Reset entry</button>
+          </div>
+
+          <p class="notice">This GitHub Pages app talks to your Google Apps Script backend, so your hours still save to Google and keep updating the doc.</p>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="group">
+          <div>
+            <h2>This month</h2>
+            <p class="mini">These entries are the ones being pushed into your Google Doc.</p>
+          </div>
+          <div class="entries" id="entries"></div>
+        </div>
+      </section>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "DSG Hours",
+  "short_name": "DSG Hours",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#efe5d6",
+  "theme_color": "#0f6c5d",
+  "description": "Quick DSG hour logging app for Graham Pinnell."
+}
