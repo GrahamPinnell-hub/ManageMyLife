@@ -100,7 +100,8 @@ h2 {
 }
 
 .hero-stats,
-.totals-stack {
+.totals-stack,
+.school-summary-grid {
   grid-template-columns: 1fr;
 }
 
@@ -292,6 +293,21 @@ textarea {
 
 .entry strong {
   font-size: 0.95rem;
+}
+
+.assignment-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fbf7f0 100%);
+}
+
+.assignment-meta {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.assignment-row {
+  display: grid;
+  gap: 4px;
 }
 
 .placeholder-card {

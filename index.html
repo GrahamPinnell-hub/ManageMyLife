@@ -19,7 +19,7 @@
         <div>
           <p class="eyebrow">ManageMyLife</p>
           <h1>Your dashboard</h1>
-          <p class="sub">DSG is live now. The other sections are ready so we can fill them in tomorrow without rebuilding the app.</p>
+          <p class="sub">DSG is live now. Canvas school sync is ready too. The other sections are ready so we can fill them in tomorrow without rebuilding the app.</p>
         </div>
         <div class="hero-stats">
           <div class="hero-stat">
@@ -46,10 +46,10 @@
             <strong>DSG hours</strong>
             <span class="tile-copy">Track service, totals, and your print-ready doc.</span>
           </button>
-          <button class="dashboard-tile" type="button" data-target="schoolSection">
-            <span class="tile-kicker">Tomorrow</span>
+          <button class="dashboard-tile active" type="button" data-target="schoolSection">
+            <span class="tile-kicker">Live now</span>
             <strong>School assignments</strong>
-            <span class="tile-copy">Homework, due dates, and what's next.</span>
+            <span class="tile-copy">Paste your Canvas token once, then sync upcoming work.</span>
           </button>
           <button class="dashboard-tile" type="button" data-target="choresSection">
             <span class="tile-kicker">Tomorrow</span>
@@ -84,11 +84,11 @@
         <div class="overview-list">
           <div class="overview-item">
             <strong>Working now</strong>
-            <span>DSG hours logging, month total, all-time total, Google Doc update, and entries history.</span>
+            <span>DSG hours logging, month total, all-time total, Google Doc update, and Canvas assignment sync.</span>
           </div>
           <div class="overview-item">
             <strong>Best next adds</strong>
-            <span>Duplicate last entry, monthly goal, second preset location, and school to-do cards.</span>
+            <span>Duplicate last entry, monthly goal, second preset location, chore checklists, and money categories.</span>
           </div>
         </div>
       </section>
@@ -191,10 +191,45 @@
         <div class="entries" id="entries"></div>
       </section>
 
-      <section class="card placeholder-card" id="schoolSection">
-        <p class="eyebrow">Tomorrow</p>
-        <h2>School assignments</h2>
-        <p class="mini">We can add homework cards, due dates, and an “urgent this week” list here.</p>
+      <section class="card" id="schoolSection">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Live now</p>
+            <h2>School assignments</h2>
+            <p class="mini">Paste your Canvas base URL and access token on this device. The token stays in your browser storage here.</p>
+          </div>
+        </div>
+
+        <div id="schoolErrorBox" class="error"></div>
+        <div id="schoolStatusBox" class="status"></div>
+
+        <div class="stack section-gap">
+          <label class="field">Canvas base URL
+            <input id="canvasBaseUrl" type="url" placeholder="https://your-school.instructure.com">
+          </label>
+
+          <label class="field">Canvas access token
+            <input id="canvasToken" type="password" placeholder="Paste token here">
+          </label>
+
+          <div class="button-stack">
+            <button class="btn secondary" id="saveCanvasSettingsBtn" type="button">Save Canvas settings</button>
+            <button class="btn primary" id="syncCanvasBtn" type="button">Sync Canvas assignments</button>
+          </div>
+
+          <div class="school-summary-grid">
+            <div class="overview-item">
+              <strong id="canvasAssignmentCount">0 assignments</strong>
+              <span>Upcoming work pulled from Canvas</span>
+            </div>
+            <div class="overview-item">
+              <strong id="canvasClassCount">0 classes</strong>
+              <span>Classes represented in the synced list</span>
+            </div>
+          </div>
+
+          <div class="entries" id="canvasAssignments"></div>
+        </div>
       </section>
 
       <section class="card placeholder-card" id="choresSection">

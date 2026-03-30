@@ -1,6 +1,8 @@
 const API_BASE = 'https://script.google.com/macros/s/AKfycbwKhkZF8rZagzw4zBozhOrGJkHQCBZm_KzE7VAbaRGSN7Zvd7v9gfRdhjfIWVBZSxMe5w/exec';
 const DEFAULT_LOCATION = 'Redeemer Church';
 const DEFAULT_DESCRIPTION = 'Voluteering opportunity at Redeemer Church 1-4th grade Sunday school service/Wednesday night middle school assistant small group leader, Chicago missions hamburger fundraiser';
+const CANVAS_SETTINGS_KEY = 'manage-my-life-canvas-settings';
+const CANVAS_ASSIGNMENTS_KEY = 'manage-my-life-canvas-assignments';
 
 const hourButtons = Array.from(document.querySelectorAll('.hour-chip'));
 const activityButtons = Array.from(document.querySelectorAll('.activity-chip'));
@@ -28,11 +30,28 @@ const els = {
   saveEntryBtn: document.getElementById('saveEntryBtn'),
   resetBtn: document.getElementById('resetBtn'),
   minusBtn: document.getElementById('minusBtn'),
-  plusBtn: document.getElementById('plusBtn')
+  plusBtn: document.getElementById('plusBtn'),
+  canvasBaseUrl: document.getElementById('canvasBaseUrl'),
+  canvasToken: document.getElementById('canvasToken'),
+  saveCanvasSettingsBtn: document.getElementById('saveCanvasSettingsBtn'),
+  syncCanvasBtn: document.getElementById('syncCanvasBtn'),
+  schoolErrorBox: document.getElementById('schoolErrorBox'),
+  schoolStatusBox: document.getElementById('schoolStatusBox'),
+  canvasAssignments: document.getElementById('canvasAssignments'),
+  canvasAssignmentCount: document.getElementById('canvasAssignmentCount'),
+  canvasClassCount: document.getElementById('canvasClassCount'),
+  schoolSection: document.getElementById('schoolSection')
+};
+
+const canvasState = {
+  settings: loadCanvasSettings(),
+  assignments: loadCanvasAssignments()
 };
 
 function init() {
   wireButtons();
+  fillCanvasSettings();
+  renderCanvasAssignments();
   els.date.value = todayValue();
   setHours(1);
   setActivity('Sunday school service');
@@ -67,6 +86,8 @@ function wireButtons() {
     applyRedeemer();
     saveProfile();
   });
+  els.saveCanvasSettingsBtn.addEventListener('click', saveCanvasSettings);
+  els.syncCanvasBtn.addEventListener('click', syncCanvasAssignments);
 }
 
 function fetchState() {
@@ -162,6 +183,175 @@ function renderEntries(entries) {
   });
 }
 
+function fillCanvasSettings() {
+  els.canvasBaseUrl.value = canvasState.settings.baseUrl || '';
+  els.canvasToken.value = canvasState.settings.token || '';
+}
+
+function saveCanvasSettings() {
+  const baseUrl = sanitizeCanvasBaseUrl(els.canvasBaseUrl.value);
+  const token = String(els.canvasToken.value || '').trim();
+
+  if (!baseUrl || !token) {
+    showSchoolError('Add both your Canvas base URL and token first.');
+    return;
+  }
+
+  canvasState.settings = { baseUrl: baseUrl, token: token };
+  localStorage.setItem(CANVAS_SETTINGS_KEY, JSON.stringify(canvasState.settings));
+  showSchoolStatus('Canvas settings saved on this device.');
+}
+
+async function syncCanvasAssignments() {
+  const baseUrl = sanitizeCanvasBaseUrl(els.canvasBaseUrl.value);
+  const token = String(els.canvasToken.value || '').trim();
+
+  if (!baseUrl || !token) {
+    showSchoolError('Add both your Canvas base URL and token first.');
+    return;
+  }
+
+  canvasState.settings = { baseUrl: baseUrl, token: token };
+  localStorage.setItem(CANVAS_SETTINGS_KEY, JSON.stringify(canvasState.settings));
+
+  showSchoolStatus('Syncing Canvas assignments...');
+  setSchoolLoading(true);
+
+  try {
+    const courses = await fetchCanvasCourses(baseUrl, token);
+    const assignmentGroups = await Promise.all(courses.map((course) => fetchCanvasAssignmentsForCourse(baseUrl, token, course)));
+    const assignments = assignmentGroups.flat()
+      .filter((item) => item.dueAt)
+      .sort((a, b) => new Date(a.dueAt) - new Date(b.dueAt))
+      .slice(0, 24);
+
+    canvasState.assignments = assignments;
+    localStorage.setItem(CANVAS_ASSIGNMENTS_KEY, JSON.stringify(assignments));
+    renderCanvasAssignments();
+    showSchoolStatus('Canvas assignments synced.');
+  } catch (error) {
+    showSchoolError(error && error.message ? error.message : String(error));
+  } finally {
+    setSchoolLoading(false);
+  }
+}
+
+async function fetchCanvasCourses(baseUrl, token) {
+  const data = await fetchCanvasJson(baseUrl + '/api/v1/courses?enrollment_state=active&state[]=available&per_page=100', token);
+  return data.filter((course) => !course.access_restricted_by_date && !course.end_at);
+}
+
+async function fetchCanvasAssignmentsForCourse(baseUrl, token, course) {
+  const url = baseUrl + '/api/v1/courses/' + encodeURIComponent(course.id) + '/assignments?bucket=upcoming&order_by=due_at&per_page=100';
+  const data = await fetchCanvasJson(url, token);
+  return data
+    .filter((assignment) => assignment.due_at)
+    .map((assignment) => ({
+      id: String(course.id) + ':' + String(assignment.id),
+      name: assignment.name || 'Untitled assignment',
+      courseName: course.name || 'Canvas course',
+      dueAt: assignment.due_at,
+      htmlUrl: assignment.html_url || '',
+      pointsPossible: assignment.points_possible,
+    }));
+}
+
+async function fetchCanvasJson(url, token) {
+  const response = await fetch(url, {
+    headers: {
+      Authorization: 'Bearer ' + token
+    }
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error('Canvas rejected the token. Double-check it and try again.');
+    }
+    if (response.status === 403) {
+      throw new Error('Canvas blocked this request. Your school may require a different setup.');
+    }
+    throw new Error('Canvas request failed with status ' + response.status + '.');
+  }
+
+  return response.json();
+}
+
+function renderCanvasAssignments() {
+  const assignments = Array.isArray(canvasState.assignments) ? canvasState.assignments : [];
+  const courseNames = new Set(assignments.map((item) => item.courseName).filter(Boolean));
+  els.canvasAssignmentCount.textContent = assignments.length + (assignments.length === 1 ? ' assignment' : ' assignments');
+  els.canvasClassCount.textContent = courseNames.size + (courseNames.size === 1 ? ' class' : ' classes');
+  els.canvasAssignments.innerHTML = '';
+
+  if (!assignments.length) {
+    els.canvasAssignments.innerHTML = '<div class="entry assignment-card"><div class="entry-top"><strong>No Canvas assignments synced yet</strong><span class="mini">Save your Canvas settings and tap sync.</span></div></div>';
+    return;
+  }
+
+  assignments.forEach((assignment) => {
+    const card = document.createElement('div');
+    card.className = 'entry assignment-card';
+    let linkHtml = '';
+    if (assignment.htmlUrl) {
+      linkHtml = '<a class="btn ghost" href="' + escapeHtml(assignment.htmlUrl) + '" target="_blank" rel="noopener noreferrer">Open in Canvas</a>';
+    }
+    card.innerHTML = '<div class="assignment-row"><strong>' + escapeHtml(assignment.name) + '</strong><span class="assignment-meta">' + escapeHtml(assignment.courseName) + '</span><span class="assignment-meta">Due ' + escapeHtml(formatDueDate(assignment.dueAt)) + (assignment.pointsPossible != null ? ' • ' + escapeHtml(String(assignment.pointsPossible)) + ' pts' : '') + '</span></div>' + linkHtml;
+    els.canvasAssignments.appendChild(card);
+  });
+}
+
+function loadCanvasSettings() {
+  try {
+    return JSON.parse(localStorage.getItem(CANVAS_SETTINGS_KEY) || 'null') || { baseUrl: '', token: '' };
+  } catch (error) {
+    return { baseUrl: '', token: '' };
+  }
+}
+
+function loadCanvasAssignments() {
+  try {
+    return JSON.parse(localStorage.getItem(CANVAS_ASSIGNMENTS_KEY) || '[]');
+  } catch (error) {
+    return [];
+  }
+}
+
+function sanitizeCanvasBaseUrl(value) {
+  const text = String(value || '').trim().replace(/\/$/, '');
+  if (!text) {
+    return '';
+  }
+  if (/^https:\/\//i.test(text)) {
+    return text;
+  }
+  return 'https://' + text;
+}
+
+function showSchoolError(message) {
+  setSchoolLoading(false);
+  els.schoolStatusBox.style.display = 'none';
+  els.schoolStatusBox.textContent = '';
+  els.schoolErrorBox.textContent = message;
+  els.schoolErrorBox.style.display = 'block';
+}
+
+function showSchoolStatus(message) {
+  if (!message) {
+    els.schoolStatusBox.style.display = 'none';
+    els.schoolStatusBox.textContent = '';
+    setSchoolLoading(false);
+    return;
+  }
+  els.schoolErrorBox.style.display = 'none';
+  els.schoolErrorBox.textContent = '';
+  els.schoolStatusBox.textContent = message;
+  els.schoolStatusBox.style.display = 'block';
+}
+
+function setSchoolLoading(on) {
+  els.schoolSection.classList.toggle('loading', !!on);
+}
+
 function apiRequest(action, params) {
   const callbackName = '__dsgCallback_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
   const query = new URLSearchParams({ action: action, callback: callbackName });
@@ -241,6 +431,16 @@ function formatHours(value) {
 function formatShortDate(iso) {
   const date = new Date(iso + 'T00:00:00');
   return (date.getMonth() + 1) + '/' + date.getDate();
+}
+
+function formatDueDate(iso) {
+  const date = new Date(iso);
+  return date.toLocaleString('en-US', {
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  });
 }
 
 function escapeHtml(value) {
