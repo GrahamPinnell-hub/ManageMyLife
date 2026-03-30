@@ -218,15 +218,12 @@ async function syncCanvasAssignments() {
   setSchoolLoading(true);
 
   try {
-    const courses = await fetchCanvasCourses(baseUrl, token);
-    const assignmentGroups = await Promise.all(courses.map((course) => fetchCanvasAssignmentsForCourse(baseUrl, token, course)));
-    const assignments = assignmentGroups.flat()
-      .filter((item) => item.dueAt)
-      .sort((a, b) => new Date(a.dueAt) - new Date(b.dueAt))
-      .slice(0, 24);
-
-    canvasState.assignments = assignments;
-    localStorage.setItem(CANVAS_ASSIGNMENTS_KEY, JSON.stringify(assignments));
+    const result = await apiRequest('syncCanvas', {
+      baseUrl: baseUrl,
+      token: token
+    });
+    canvasState.assignments = Array.isArray(result.assignments) ? result.assignments : [];
+    localStorage.setItem(CANVAS_ASSIGNMENTS_KEY, JSON.stringify(canvasState.assignments));
     renderCanvasAssignments();
     showSchoolStatus('Canvas assignments synced.');
   } catch (error) {
@@ -234,46 +231,6 @@ async function syncCanvasAssignments() {
   } finally {
     setSchoolLoading(false);
   }
-}
-
-async function fetchCanvasCourses(baseUrl, token) {
-  const data = await fetchCanvasJson(baseUrl + '/api/v1/courses?enrollment_state=active&state[]=available&per_page=100', token);
-  return data.filter((course) => !course.access_restricted_by_date && !course.end_at);
-}
-
-async function fetchCanvasAssignmentsForCourse(baseUrl, token, course) {
-  const url = baseUrl + '/api/v1/courses/' + encodeURIComponent(course.id) + '/assignments?bucket=upcoming&order_by=due_at&per_page=100';
-  const data = await fetchCanvasJson(url, token);
-  return data
-    .filter((assignment) => assignment.due_at)
-    .map((assignment) => ({
-      id: String(course.id) + ':' + String(assignment.id),
-      name: assignment.name || 'Untitled assignment',
-      courseName: course.name || 'Canvas course',
-      dueAt: assignment.due_at,
-      htmlUrl: assignment.html_url || '',
-      pointsPossible: assignment.points_possible,
-    }));
-}
-
-async function fetchCanvasJson(url, token) {
-  const response = await fetch(url, {
-    headers: {
-      Authorization: 'Bearer ' + token
-    }
-  });
-
-  if (!response.ok) {
-    if (response.status === 401) {
-      throw new Error('Canvas rejected the token. Double-check it and try again.');
-    }
-    if (response.status === 403) {
-      throw new Error('Canvas blocked this request. Your school may require a different setup.');
-    }
-    throw new Error('Canvas request failed with status ' + response.status + '.');
-  }
-
-  return response.json();
 }
 
 function renderCanvasAssignments() {
