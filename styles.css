@@ -1,9 +1,11 @@
 :root {
   --bg: #efe5d6;
   --card: #fffdf9;
+  --card-alt: #f8f3ec;
   --ink: #171412;
   --muted: #675e55;
   --accent: #0f6c5d;
+  --accent-strong: #0b564b;
   --accent-soft: #d7ebe6;
   --border: rgba(23, 20, 18, 0.14);
   --danger: #9e2f2f;
@@ -13,12 +15,15 @@
 
 html {
   font-size: 22px;
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
-  background: linear-gradient(180deg, #e8dbc7 0%, var(--bg) 100%);
+  background:
+    radial-gradient(circle at top left, rgba(255,255,255,.55), transparent 28%),
+    linear-gradient(180deg, #e8dbc7 0%, var(--bg) 100%);
   color: var(--ink);
 }
 
@@ -26,11 +31,12 @@ body {
   width: 100%;
   max-width: 560px;
   margin: 0 auto;
-  padding: 14px 10px 36px;
+  padding: 14px 10px 40px;
   display: grid;
   gap: 14px;
 }
 
+.hero-card,
 .card {
   background: var(--card);
   border: 1px solid var(--border);
@@ -39,40 +45,69 @@ body {
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
 }
 
+.hero-card {
+  background: linear-gradient(180deg, #fffaf1 0%, #fffdf9 100%);
+  display: grid;
+  gap: 14px;
+}
+
 h1, h2, p {
   margin: 0;
 }
 
 h1 {
-  font-size: 1.55rem;
-  line-height: 1.1;
+  font-size: 1.65rem;
+  line-height: 1.05;
 }
 
 h2 {
-  font-size: 1.1rem;
+  font-size: 1.08rem;
   line-height: 1.2;
 }
 
-.sub, .mini, .notice {
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.sub, .mini, .notice, .tile-copy {
   color: var(--muted);
   line-height: 1.45;
 }
 
 .sub {
-  margin-top: 6px;
-  font-size: 0.72rem;
+  margin-top: 8px;
+  font-size: 0.76rem;
 }
 
-.mini, .notice {
+.mini, .notice, .tile-copy {
   font-size: 0.8rem;
 }
 
-.top, .stack, .field, .group, .entries, .totals-stack {
+.section-head,
+.stack,
+.field,
+.group,
+.entries,
+.totals-stack,
+.hero-stats,
+.overview-list {
   display: grid;
   gap: 12px;
 }
 
-.total, .overall {
+.hero-stats,
+.totals-stack {
+  grid-template-columns: 1fr;
+}
+
+.hero-stat,
+.total,
+.overall,
+.overview-item {
   background: white;
   border: 1px solid var(--border);
   border-radius: 18px;
@@ -81,8 +116,51 @@ h2 {
   gap: 6px;
 }
 
-.total strong, .overall strong {
-  font-size: 1.6rem;
+.hero-stat strong,
+.total strong,
+.overall strong {
+  font-size: 1.55rem;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dashboard-tile {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: linear-gradient(180deg, #ffffff 0%, var(--card-alt) 100%);
+  padding: 14px;
+  text-align: left;
+  display: grid;
+  gap: 8px;
+  min-height: 142px;
+  color: var(--ink);
+}
+
+.dashboard-tile.active {
+  background: linear-gradient(180deg, #0f6c5d 0%, #15756a 100%);
+  color: white;
+}
+
+.dashboard-tile.active .tile-kicker,
+.dashboard-tile.active .tile-copy {
+  color: rgba(255,255,255,0.82);
+}
+
+.tile-kicker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+
+.dashboard-tile strong,
+.overview-item strong {
+  font-size: 0.95rem;
 }
 
 label {
@@ -148,10 +226,14 @@ textarea {
   min-height: 72px;
 }
 
-.chip-grid {
+.chip-grid,
+.button-stack {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+.chip-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .chip, .btn {
@@ -194,11 +276,6 @@ textarea {
   border: 1px solid var(--border);
 }
 
-.button-stack {
-  display: grid;
-  gap: 10px;
-}
-
 .entry {
   background: white;
   border: 1px solid var(--border);
@@ -215,6 +292,14 @@ textarea {
 
 .entry strong {
   font-size: 0.95rem;
+}
+
+.placeholder-card {
+  background: linear-gradient(180deg, #fffdf9 0%, #f7f0e6 100%);
+}
+
+.quick-overview {
+  background: linear-gradient(180deg, #fffdf9 0%, #fcf7ef 100%);
 }
 
 .error, .status {

@@ -15,30 +15,110 @@
   </head>
   <body>
     <div class="shell">
-      <section class="card" id="appCard">
-        <div class="top">
-          <div>
-            <h1>ManageMyLife</h1>
-            <p class="sub">Log your hours here, then open the Google Doc and print from there.</p>
+      <section class="hero-card">
+        <div>
+          <p class="eyebrow">ManageMyLife</p>
+          <h1>Your dashboard</h1>
+          <p class="sub">DSG is live now. The other sections are ready so we can fill them in tomorrow without rebuilding the app.</p>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="mini">This month DSG</span>
+            <strong id="dashboardMonthTotal">0.0 hrs</strong>
           </div>
-          <div class="totals-stack">
-            <div class="total">
-              <span class="mini">Current month total</span>
-              <strong id="monthTotal">0.0 hrs</strong>
-              <span id="monthLabel" class="mini"></span>
-            </div>
-            <div class="overall">
-              <span class="mini">All-time total</span>
-              <strong id="overallTotal">0.0 hrs</strong>
-              <span class="mini">Everything you have logged so far</span>
-            </div>
+          <div class="hero-stat">
+            <span class="mini">All-time DSG</span>
+            <strong id="dashboardOverallTotal">0.0 hrs</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <div>
+            <h2>Life areas</h2>
+            <p class="mini">Tap a section card to jump down to it.</p>
+          </div>
+        </div>
+        <div class="dashboard-grid">
+          <button class="dashboard-tile active" type="button" data-target="dsgSection">
+            <span class="tile-kicker">Live now</span>
+            <strong>DSG hours</strong>
+            <span class="tile-copy">Track service, totals, and your print-ready doc.</span>
+          </button>
+          <button class="dashboard-tile" type="button" data-target="schoolSection">
+            <span class="tile-kicker">Tomorrow</span>
+            <strong>School assignments</strong>
+            <span class="tile-copy">Homework, due dates, and what's next.</span>
+          </button>
+          <button class="dashboard-tile" type="button" data-target="choresSection">
+            <span class="tile-kicker">Tomorrow</span>
+            <strong>Chores</strong>
+            <span class="tile-copy">House jobs, repeats, and what needs done today.</span>
+          </button>
+          <button class="dashboard-tile" type="button" data-target="gymSection">
+            <span class="tile-kicker">Tomorrow</span>
+            <strong>Gym</strong>
+            <span class="tile-copy">Workout plan, check-ins, and streaks.</span>
+          </button>
+          <button class="dashboard-tile" type="button" data-target="prayerSection">
+            <span class="tile-kicker">Tomorrow</span>
+            <strong>Prayer / devotions</strong>
+            <span class="tile-copy">Simple daily faith habits and notes.</span>
+          </button>
+          <button class="dashboard-tile" type="button" data-target="moneySection">
+            <span class="tile-kicker">Tomorrow</span>
+            <strong>Money tracking</strong>
+            <span class="tile-copy">Spending, saving, and upcoming costs.</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="card quick-overview">
+        <div class="section-head">
+          <div>
+            <h2>Quick view</h2>
+            <p class="mini">What is already working and what we can expand next.</p>
+          </div>
+        </div>
+        <div class="overview-list">
+          <div class="overview-item">
+            <strong>Working now</strong>
+            <span>DSG hours logging, month total, all-time total, Google Doc update, and entries history.</span>
+          </div>
+          <div class="overview-item">
+            <strong>Best next adds</strong>
+            <span>Duplicate last entry, monthly goal, second preset location, and school to-do cards.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="card tracker-card" id="dsgSection">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Active section</p>
+            <h2>DSG tracker</h2>
+            <p class="mini">Log your hours here, then open the Google Doc and print from there.</p>
+          </div>
+        </div>
+
+        <div class="totals-stack">
+          <div class="total">
+            <span class="mini">Current month total</span>
+            <strong id="monthTotal">0.0 hrs</strong>
+            <span id="monthLabel" class="mini"></span>
+          </div>
+          <div class="overall">
+            <span class="mini">All-time total</span>
+            <strong id="overallTotal">0.0 hrs</strong>
+            <span class="mini">Everything you have logged so far</span>
           </div>
         </div>
 
         <div id="errorBox" class="error"></div>
         <div id="statusBox" class="status"></div>
 
-        <div class="stack section-gap">
+        <div class="stack section-gap" id="appCard">
           <div class="button-stack">
             <button class="btn secondary" id="redeemerBtn" type="button">Use Redeemer Church</button>
             <button class="btn ghost" id="saveProfileBtn" type="button">Save project info</button>
@@ -97,18 +177,48 @@
             <button class="btn ghost" id="resetBtn" type="button">Reset entry</button>
           </div>
 
-          <p class="notice">This GitHub Pages app talks to your Google Apps Script backend, so your hours still save to Google and keep updating the doc.</p>
+          <p class="notice">This app talks to your Google backend, so your DSG hours still save to Google and keep updating the doc.</p>
         </div>
       </section>
 
       <section class="card">
-        <div class="group">
+        <div class="section-head">
           <div>
             <h2>This month</h2>
             <p class="mini">These entries are the ones being pushed into your Google Doc.</p>
           </div>
-          <div class="entries" id="entries"></div>
         </div>
+        <div class="entries" id="entries"></div>
+      </section>
+
+      <section class="card placeholder-card" id="schoolSection">
+        <p class="eyebrow">Tomorrow</p>
+        <h2>School assignments</h2>
+        <p class="mini">We can add homework cards, due dates, and an “urgent this week” list here.</p>
+      </section>
+
+      <section class="card placeholder-card" id="choresSection">
+        <p class="eyebrow">Tomorrow</p>
+        <h2>Chores</h2>
+        <p class="mini">We can add repeat chores, quick check-off buttons, and who owns what.</p>
+      </section>
+
+      <section class="card placeholder-card" id="gymSection">
+        <p class="eyebrow">Tomorrow</p>
+        <h2>Gym</h2>
+        <p class="mini">We can add workouts, lift tracking, and weekly consistency checks here.</p>
+      </section>
+
+      <section class="card placeholder-card" id="prayerSection">
+        <p class="eyebrow">Tomorrow</p>
+        <h2>Prayer / devotions</h2>
+        <p class="mini">We can add daily habits, prayer notes, and streaks here.</p>
+      </section>
+
+      <section class="card placeholder-card" id="moneySection">
+        <p class="eyebrow">Tomorrow</p>
+        <h2>Money tracking</h2>
+        <p class="mini">We can add spending, savings, and upcoming purchases here.</p>
       </section>
     </div>
 

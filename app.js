@@ -4,12 +4,15 @@ const DEFAULT_DESCRIPTION = 'Voluteering opportunity at Redeemer Church 1-4th gr
 
 const hourButtons = Array.from(document.querySelectorAll('.hour-chip'));
 const activityButtons = Array.from(document.querySelectorAll('.activity-chip'));
+const dashboardTiles = Array.from(document.querySelectorAll('.dashboard-tile'));
 
 const els = {
   appCard: document.getElementById('appCard'),
   monthTotal: document.getElementById('monthTotal'),
   monthLabel: document.getElementById('monthLabel'),
   overallTotal: document.getElementById('overallTotal'),
+  dashboardMonthTotal: document.getElementById('dashboardMonthTotal'),
+  dashboardOverallTotal: document.getElementById('dashboardOverallTotal'),
   location: document.getElementById('location'),
   organization: document.getElementById('organization'),
   description: document.getElementById('description'),
@@ -43,6 +46,16 @@ function wireButtons() {
 
   activityButtons.forEach((button) => {
     button.addEventListener('click', () => setActivity(button.getAttribute('data-activity')));
+  });
+
+  dashboardTiles.forEach((tile) => {
+    tile.addEventListener('click', () => {
+      const targetId = tile.getAttribute('data-target');
+      const target = document.getElementById(targetId);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
   });
 
   els.minusBtn.addEventListener('click', () => adjustHours(-0.5));
@@ -111,9 +124,13 @@ function deleteEntry(entryId) {
 
 function render(state) {
   clearMessages();
-  els.monthTotal.textContent = formatHours(state.monthTotal || 0) + ' hrs';
+  const monthTotal = formatHours(state.monthTotal || 0) + ' hrs';
+  const overallTotal = formatHours(state.overallTotal || 0) + ' hrs';
+  els.monthTotal.textContent = monthTotal;
   els.monthLabel.textContent = state.monthLabel || '';
-  els.overallTotal.textContent = formatHours(state.overallTotal || 0) + ' hrs';
+  els.overallTotal.textContent = overallTotal;
+  els.dashboardMonthTotal.textContent = monthTotal;
+  els.dashboardOverallTotal.textContent = overallTotal;
   els.location.value = state.profile && state.profile.location ? state.profile.location : DEFAULT_LOCATION;
   els.organization.value = state.profile && state.profile.organization ? state.profile.organization : DEFAULT_LOCATION;
   els.description.value = state.profile && state.profile.description ? state.profile.description : DEFAULT_DESCRIPTION;
@@ -152,9 +169,11 @@ function apiRequest(action, params) {
   Object.keys(extra).forEach((key) => query.set(key, extra[key]));
 
   return new Promise((resolve, reject) => {
+    let script = null;
+
     const cleanup = () => {
       delete window[callbackName];
-      if (script.parentNode) {
+      if (script && script.parentNode) {
         script.parentNode.removeChild(script);
       }
     };
@@ -168,7 +187,7 @@ function apiRequest(action, params) {
       resolve(response.data);
     };
 
-    const script = document.createElement('script');
+    script = document.createElement('script');
     script.src = API_BASE + '?' + query.toString();
     script.onerror = () => {
       cleanup();
@@ -267,4 +286,3 @@ function showStatus(message) {
 }
 
 init();
-
