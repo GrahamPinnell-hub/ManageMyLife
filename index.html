@@ -19,7 +19,7 @@
         <div>
           <p class="eyebrow">ManageMyLife</p>
           <h1>Your dashboard</h1>
-          <p class="sub">DSG is live now. Canvas school sync is ready too. The other sections are ready so we can fill them in tomorrow without rebuilding the app.</p>
+          <p class="sub">DSG is live now. Canvas and Edgenuity school sync are ready too. The other sections are ready so we can fill them in tomorrow without rebuilding the app.</p>
         </div>
         <div class="hero-stats">
           <div class="hero-stat">
@@ -50,6 +50,11 @@
             <span class="tile-kicker">Live now</span>
             <strong>School assignments</strong>
             <span class="tile-copy">Sync Canvas, then sort your work by urgency and class.</span>
+          </button>
+          <button class="dashboard-tile active" type="button" data-target="calendarSection">
+            <span class="tile-kicker">Live now</span>
+            <strong>Calendar</strong>
+            <span class="tile-copy">See Canvas, Edgenuity, and Google events by day.</span>
           </button>
           <button class="dashboard-tile" type="button" data-target="choresSection">
             <span class="tile-kicker">Tomorrow</span>
@@ -84,7 +89,7 @@
         <div class="overview-list">
           <div class="overview-item">
             <strong>Working now</strong>
-            <span>DSG hours logging, month total, all-time total, Google Doc update, and Canvas assignment sync.</span>
+            <span>DSG hours logging, month total, all-time total, Google Doc update, Canvas and Edgenuity sync, and a live calendar section.</span>
           </div>
           <div class="overview-item">
             <strong>Best next adds</strong>
@@ -276,10 +281,147 @@
             </div>
             <div class="class-groups" id="canvasByClass"></div>
           </div>
+
+
+          <div class="school-block integration-block">
+            <div class="section-head compact-head">
+              <div>
+                <p class="eyebrow">Live now</p>
+                <h3>Edgenuity</h3>
+                <p class="mini">Paste your Edgenuity API base URL, enrollment ID, and access token on this device. The token stays in your browser storage here.</p>
+              </div>
+            </div>
+
+            <label class="field">Edgenuity API base URL
+              <input id="edgenuityApiBaseUrl" type="url" placeholder="https://r07.core.learn.edgenuity.com">
+            </label>
+
+            <label class="field">Edgenuity enrollment ID
+              <input id="edgenuityEnrollmentId" type="text" placeholder="05b6ab11-ec90-46d8-bc30-1d3519db593f">
+            </label>
+
+            <label class="field">Edgenuity access token
+              <input id="edgenuityToken" type="password" placeholder="Paste token here">
+            </label>
+
+            <div class="button-stack">
+              <button class="btn secondary" id="saveEdgenuitySettingsBtn" type="button">Save Edgenuity settings</button>
+              <button class="btn primary" id="syncEdgenuityBtn" type="button">Sync Edgenuity assignments</button>
+            </div>
+
+            <div class="school-summary-grid">
+              <div class="overview-item urgency-card overdue">
+                <strong id="edgenuityOverdueCount">0 overdue</strong>
+                <span>Edgenuity items already past due</span>
+              </div>
+              <div class="overview-item urgency-card today">
+                <strong id="edgenuityTodayCount">0 due today</strong>
+                <span>Assignments to knock out today</span>
+              </div>
+              <div class="overview-item urgency-card week">
+                <strong id="edgenuityWeekCount">0 due this week</strong>
+                <span>Upcoming work due within 7 days</span>
+              </div>
+              <div class="overview-item urgency-card normal">
+                <strong id="edgenuityAssignmentCount">0 open items</strong>
+                <span>Open work pulled from Edgenuity</span>
+              </div>
+            </div>
+
+            <div class="school-summary-grid two-up">
+              <div class="overview-item">
+                <strong id="edgenuityCourseName">Edgenuity course</strong>
+                <span>Current synced course</span>
+              </div>
+              <div class="overview-item">
+                <strong id="edgenuityNextDue">No due date yet</strong>
+                <span>Next Edgenuity deadline</span>
+              </div>
+            </div>
+
+            <div class="school-block">
+              <div class="section-head compact-head">
+                <div>
+                  <h3>Edgenuity due today</h3>
+                  <p class="mini">What needs attention right now.</p>
+                </div>
+              </div>
+              <div class="entries" id="edgenuityDueToday"></div>
+            </div>
+
+            <div class="school-block">
+              <div class="section-head compact-head">
+                <div>
+                  <h3>Edgenuity due this week</h3>
+                  <p class="mini">Your next chunk of work.</p>
+                </div>
+              </div>
+              <div class="entries" id="edgenuityDueThisWeek"></div>
+            </div>
+
+            <div class="school-block">
+              <div class="section-head compact-head">
+                <div>
+                  <h3>By unit</h3>
+                  <p class="mini">Grouped so you can see which unit is stacking up.</p>
+                </div>
+              </div>
+              <div class="class-groups" id="edgenuityByUnit"></div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section class="card placeholder-card" id="choresSection">
+            <section class="card" id="calendarSection">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Live now</p>
+            <h2>Calendar</h2>
+            <p class="mini">Your school work and your Google Calendar in one place.</p>
+          </div>
+        </div>
+
+        <div id="calendarErrorBox" class="error"></div>
+        <div id="calendarStatusBox" class="status"></div>
+
+        <div class="button-stack section-gap">
+          <button class="btn secondary" id="rebuildCalendarBtn" type="button">Refresh school calendar</button>
+          <button class="btn primary" id="syncGoogleCalendarBtn" type="button">Sync Google Calendar</button>
+        </div>
+
+        <div class="school-summary-grid two-up">
+          <div class="overview-item">
+            <strong id="calendarItemCount">0 items</strong>
+            <span>Everything showing on your calendar right now</span>
+          </div>
+          <div class="overview-item">
+            <strong id="calendarNextItem">Nothing scheduled yet</strong>
+            <span>Next thing coming up</span>
+          </div>
+        </div>
+
+        <div class="school-block">
+          <div class="section-head compact-head">
+            <div>
+              <h3>Today</h3>
+              <p class="mini">What is due or happening today.</p>
+            </div>
+          </div>
+          <div class="entries" id="calendarToday"></div>
+        </div>
+
+        <div class="school-block">
+          <div class="section-head compact-head">
+            <div>
+              <h3>Next 7 days</h3>
+              <p class="mini">Everything grouped by day so you can plan the week.</p>
+            </div>
+          </div>
+          <div class="calendar-days" id="calendarWeek"></div>
+        </div>
+      </section>
+
+<section class="card placeholder-card" id="choresSection">
         <p class="eyebrow">Tomorrow</p>
         <h2>Chores</h2>
         <p class="mini">We can add repeat chores, quick check-off buttons, and who owns what.</p>

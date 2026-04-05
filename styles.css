@@ -109,6 +109,12 @@ h3 {
   gap: 12px;
 }
 
+.integration-block {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
 .compact-head {
   gap: 6px;
 }
@@ -127,7 +133,8 @@ h3 {
 .total,
 .overall,
 .overview-item,
-.class-card {
+.class-card,
+.calendar-day {
   background: white;
   border: 1px solid var(--border);
   border-radius: 18px;
@@ -421,4 +428,54 @@ textarea {
     max-width: 640px;
     padding: 18px 16px 40px;
   }
+}
+
+
+.calendar-days {
+  display: grid;
+  gap: 12px;
+}
+
+.calendar-day {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.calendar-day-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.calendar-source {
+  display: inline-flex;
+  width: fit-content;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.calendar-source.google-calendar {
+  background: #e8f0fe;
+  color: #2457c5;
+}
+
+.calendar-source.canvas {
+  background: #fff0e5;
+  color: #b25600;
+}
+
+.calendar-source.edgenuity {
+  background: #f1e9ff;
+  color: #6a38b5;
 }

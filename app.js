@@ -3,6 +3,11 @@ const DEFAULT_LOCATION = 'Redeemer Church';
 const DEFAULT_DESCRIPTION = 'Voluteering opportunity at Redeemer Church 1-4th grade Sunday school service/Wednesday night middle school assistant small group leader, Chicago missions hamburger fundraiser';
 const CANVAS_SETTINGS_KEY = 'manage-my-life-canvas-settings';
 const CANVAS_ASSIGNMENTS_KEY = 'manage-my-life-canvas-assignments';
+const EDGENUITY_SETTINGS_KEY = 'manage-my-life-edgenuity-settings';
+const EDGENUITY_ASSIGNMENTS_KEY = 'manage-my-life-edgenuity-assignments';
+const EDGENUITY_DEFAULT_API_BASE = 'https://r07.core.learn.edgenuity.com';
+const GOOGLE_CALENDAR_EVENTS_KEY = 'manage-my-life-google-calendar-events';
+const GOOGLE_CALENDAR_NAME_KEY = 'manage-my-life-google-calendar-name';
 
 const hourButtons = Array.from(document.querySelectorAll('.hour-chip'));
 const activityButtons = Array.from(document.querySelectorAll('.activity-chip'));
@@ -46,7 +51,30 @@ const els = {
   canvasDueToday: document.getElementById('canvasDueToday'),
   canvasDueThisWeek: document.getElementById('canvasDueThisWeek'),
   canvasByClass: document.getElementById('canvasByClass'),
-  schoolSection: document.getElementById('schoolSection')
+  edgenuityApiBaseUrl: document.getElementById('edgenuityApiBaseUrl'),
+  edgenuityEnrollmentId: document.getElementById('edgenuityEnrollmentId'),
+  edgenuityToken: document.getElementById('edgenuityToken'),
+  saveEdgenuitySettingsBtn: document.getElementById('saveEdgenuitySettingsBtn'),
+  syncEdgenuityBtn: document.getElementById('syncEdgenuityBtn'),
+  edgenuityAssignmentCount: document.getElementById('edgenuityAssignmentCount'),
+  edgenuityCourseName: document.getElementById('edgenuityCourseName'),
+  edgenuityOverdueCount: document.getElementById('edgenuityOverdueCount'),
+  edgenuityTodayCount: document.getElementById('edgenuityTodayCount'),
+  edgenuityWeekCount: document.getElementById('edgenuityWeekCount'),
+  edgenuityNextDue: document.getElementById('edgenuityNextDue'),
+  edgenuityDueToday: document.getElementById('edgenuityDueToday'),
+  edgenuityDueThisWeek: document.getElementById('edgenuityDueThisWeek'),
+  edgenuityByUnit: document.getElementById('edgenuityByUnit'),
+  rebuildCalendarBtn: document.getElementById('rebuildCalendarBtn'),
+  syncGoogleCalendarBtn: document.getElementById('syncGoogleCalendarBtn'),
+  calendarErrorBox: document.getElementById('calendarErrorBox'),
+  calendarStatusBox: document.getElementById('calendarStatusBox'),
+  calendarItemCount: document.getElementById('calendarItemCount'),
+  calendarNextItem: document.getElementById('calendarNextItem'),
+  calendarToday: document.getElementById('calendarToday'),
+  calendarWeek: document.getElementById('calendarWeek'),
+  schoolSection: document.getElementById('schoolSection'),
+  calendarSection: document.getElementById('calendarSection')
 };
 
 const canvasState = {
@@ -54,10 +82,24 @@ const canvasState = {
   assignments: loadCanvasAssignments()
 };
 
+const edgenuityState = {
+  settings: loadEdgenuitySettings(),
+  assignments: loadEdgenuityAssignments(),
+  courseName: loadEdgenuityCourseName()
+};
+
+const googleCalendarState = {
+  events: loadGoogleCalendarEvents(),
+  calendarName: loadGoogleCalendarName()
+};
+
 function init() {
   wireButtons();
   fillCanvasSettings();
+  fillEdgenuitySettings();
   renderCanvasAssignments();
+  renderEdgenuityAssignments();
+  renderCalendarView();
   els.date.value = todayValue();
   setHours(1);
   setActivity('Sunday school service');
@@ -94,6 +136,10 @@ function wireButtons() {
   });
   els.saveCanvasSettingsBtn.addEventListener('click', saveCanvasSettings);
   els.syncCanvasBtn.addEventListener('click', syncCanvasAssignments);
+  els.saveEdgenuitySettingsBtn.addEventListener('click', saveEdgenuitySettings);
+  els.syncEdgenuityBtn.addEventListener('click', syncEdgenuityAssignments);
+  els.rebuildCalendarBtn.addEventListener('click', () => { renderCalendarView(); showCalendarStatus('School calendar refreshed.'); });
+  els.syncGoogleCalendarBtn.addEventListener('click', syncGoogleCalendarEvents);
 }
 
 function fetchState() {
@@ -178,7 +224,7 @@ function renderEntries(entries) {
   entries.forEach((entry) => {
     const card = document.createElement('div');
     card.className = 'entry';
-    card.innerHTML = '<div class="entry-top"><strong>' + escapeHtml(entry.activity) + '</strong><span class="mini">' + formatShortDate(entry.date) + ' • ' + formatHours(entry.hours) + ' hrs</span></div>';
+    card.innerHTML = '<div class="entry-top"><strong>' + escapeHtml(entry.activity) + '</strong><span class="mini">' + formatShortDate(entry.date) + ' â€¢ ' + formatHours(entry.hours) + ' hrs</span></div>';
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'btn ghost';
@@ -231,12 +277,190 @@ async function syncCanvasAssignments() {
     canvasState.assignments = Array.isArray(result.assignments) ? result.assignments : [];
     localStorage.setItem(CANVAS_ASSIGNMENTS_KEY, JSON.stringify(canvasState.assignments));
     renderCanvasAssignments();
+    renderCalendarView();
     showSchoolStatus('Canvas assignments synced.');
   } catch (error) {
     showSchoolError(error && error.message ? error.message : String(error));
   } finally {
     setSchoolLoading(false);
   }
+}
+
+function fillEdgenuitySettings() {
+  els.edgenuityApiBaseUrl.value = edgenuityState.settings.apiBaseUrl || EDGENUITY_DEFAULT_API_BASE;
+  els.edgenuityEnrollmentId.value = edgenuityState.settings.enrollmentId || '';
+  els.edgenuityToken.value = edgenuityState.settings.token || '';
+}
+
+function saveEdgenuitySettings() {
+  const apiBaseUrl = sanitizeEdgenuityBaseUrl(els.edgenuityApiBaseUrl.value);
+  const enrollmentId = String(els.edgenuityEnrollmentId.value || '').trim();
+  const token = String(els.edgenuityToken.value || '').trim();
+
+  if (!apiBaseUrl || !enrollmentId || !token) {
+    showSchoolError('Add your Edgenuity API base URL, enrollment ID, and token first.');
+    return;
+  }
+
+  edgenuityState.settings = { apiBaseUrl: apiBaseUrl, enrollmentId: enrollmentId, token: token };
+  localStorage.setItem(EDGENUITY_SETTINGS_KEY, JSON.stringify(edgenuityState.settings));
+  showSchoolStatus('Edgenuity settings saved on this device.');
+}
+
+async function syncEdgenuityAssignments() {
+  const apiBaseUrl = sanitizeEdgenuityBaseUrl(els.edgenuityApiBaseUrl.value);
+  const enrollmentId = String(els.edgenuityEnrollmentId.value || '').trim();
+  const token = String(els.edgenuityToken.value || '').trim();
+
+  if (!apiBaseUrl || !enrollmentId || !token) {
+    showSchoolError('Add your Edgenuity API base URL, enrollment ID, and token first.');
+    return;
+  }
+
+  edgenuityState.settings = { apiBaseUrl: apiBaseUrl, enrollmentId: enrollmentId, token: token };
+  localStorage.setItem(EDGENUITY_SETTINGS_KEY, JSON.stringify(edgenuityState.settings));
+
+  showSchoolStatus('Syncing Edgenuity assignments...');
+  setSchoolLoading(true);
+
+  try {
+    const result = await apiRequest('syncEdgenuity', {
+      apiBaseUrl: apiBaseUrl,
+      enrollmentId: enrollmentId,
+      token: token
+    });
+    edgenuityState.assignments = Array.isArray(result.assignments) ? result.assignments : [];
+    edgenuityState.courseName = result.courseName || 'Edgenuity course';
+    localStorage.setItem(EDGENUITY_ASSIGNMENTS_KEY, JSON.stringify(edgenuityState.assignments));
+    localStorage.setItem('manage-my-life-edgenuity-course-name', edgenuityState.courseName);
+    renderEdgenuityAssignments();
+    renderCalendarView();
+    showSchoolStatus('Edgenuity assignments synced.');
+  } catch (error) {
+    showSchoolError(error && error.message ? error.message : String(error));
+  } finally {
+    setSchoolLoading(false);
+  }
+}
+
+
+async function syncGoogleCalendarEvents() {
+  showCalendarStatus('Syncing Google Calendar...');
+  setCalendarLoading(true);
+
+  try {
+    const result = await apiRequest('syncGoogleCalendar', { days: 14 });
+    googleCalendarState.events = Array.isArray(result.events) ? result.events : [];
+    googleCalendarState.calendarName = result.calendarName || 'Google Calendar';
+    localStorage.setItem(GOOGLE_CALENDAR_EVENTS_KEY, JSON.stringify(googleCalendarState.events));
+    localStorage.setItem(GOOGLE_CALENDAR_NAME_KEY, googleCalendarState.calendarName);
+    renderCalendarView();
+    showCalendarStatus('Google Calendar synced.');
+  } catch (error) {
+    showCalendarError(error && error.message ? error.message : String(error));
+  } finally {
+    setCalendarLoading(false);
+  }
+}
+
+function renderCalendarView() {
+  const items = collectCalendarItems();
+  els.calendarItemCount.textContent = items.length + (items.length === 1 ? ' item' : ' items');
+  els.calendarNextItem.textContent = items.length ? buildCalendarHeadline(items[0]) : 'Nothing scheduled yet';
+
+  const todayItems = items.filter((item) => isSameDay(item.start, new Date()));
+  renderCalendarList(els.calendarToday, todayItems, 'Nothing on the calendar today.');
+  renderCalendarDays(els.calendarWeek, items, 7);
+}
+
+function collectCalendarItems() {
+  const canvasItems = (canvasState.assignments || []).map((assignment) => ({
+    title: assignment.name,
+    start: assignment.dueAt,
+    source: 'canvas',
+    courseName: assignment.courseName,
+    unitName: assignment.unitName || '',
+    lessonName: assignment.lessonName || '',
+    itemType: assignment.pointsPossible != null ? String(assignment.pointsPossible) + ' pts' : '',
+    htmlUrl: assignment.htmlUrl || '',
+    openLabel: assignment.openLabel || 'Open in Canvas'
+  }));
+
+  const edgenuityItems = (edgenuityState.assignments || []).map((assignment) => ({
+    title: assignment.name,
+    start: assignment.dueAt,
+    source: 'edgenuity',
+    courseName: assignment.courseName,
+    unitName: assignment.unitName || '',
+    lessonName: assignment.lessonName || '',
+    itemType: assignment.itemType || '',
+    htmlUrl: assignment.htmlUrl || '',
+    openLabel: assignment.openLabel || 'Open in Edgenuity'
+  }));
+
+  const googleItems = (googleCalendarState.events || []).map((event) => ({
+    title: event.title,
+    start: event.start,
+    end: event.end,
+    source: 'google-calendar',
+    courseName: googleCalendarState.calendarName || 'Google Calendar',
+    unitName: event.location || '',
+    lessonName: '',
+    itemType: event.allDay ? 'All day' : '',
+    htmlUrl: event.htmlUrl || '',
+    openLabel: event.openLabel || 'Open Google Calendar'
+  }));
+
+  return canvasItems.concat(edgenuityItems, googleItems)
+    .filter((item) => item.start)
+    .sort((a, b) => new Date(a.start) - new Date(b.start));
+}
+
+function renderCalendarList(container, items, emptyMessage) {
+  container.innerHTML = '';
+  if (!items.length) {
+    container.innerHTML = '<div class="entry assignment-card"><div class="entry-top"><strong>' + escapeHtml(emptyMessage) + '</strong><span class="mini">You are clear here.</span></div></div>';
+    return;
+  }
+  items.forEach((item) => {
+    container.appendChild(buildAssignmentCard(item));
+  });
+}
+
+function renderCalendarDays(container, items, limitDays) {
+  container.innerHTML = '';
+  if (!items.length) {
+    container.innerHTML = '<div class="calendar-day"><div class="calendar-day-head"><strong>No upcoming items</strong><span class="mini">Sync Google Calendar or refresh school items.</span></div></div>';
+    return;
+  }
+
+  const grouped = {};
+  items.forEach((item) => {
+    const key = toLocalDayKey(item.start);
+    if (!grouped[key]) {
+      grouped[key] = [];
+    }
+    grouped[key].push(item);
+  });
+
+  Object.keys(grouped).sort().slice(0, limitDays).forEach((dayKey) => {
+    const card = document.createElement('div');
+    card.className = 'calendar-day';
+    const head = document.createElement('div');
+    head.className = 'calendar-day-head';
+    head.innerHTML = '<strong>' + escapeHtml(formatCalendarDayLabel(dayKey)) + '</strong><span class="mini">' + grouped[dayKey].length + (grouped[dayKey].length === 1 ? ' item' : ' items') + '</span>';
+    card.appendChild(head);
+
+    grouped[dayKey].forEach((item) => {
+      card.appendChild(buildAssignmentCard(item));
+    });
+
+    container.appendChild(card);
+  });
+}
+
+function buildCalendarHeadline(item) {
+  return item.title + ' on ' + formatDueDate(item.start);
 }
 
 function renderCanvasAssignments() {
@@ -261,6 +485,27 @@ function renderCanvasAssignments() {
   renderAssignmentsByClass(assignments);
 }
 
+function renderEdgenuityAssignments() {
+  const assignments = Array.isArray(edgenuityState.assignments) ? edgenuityState.assignments : [];
+  const overdue = assignments.filter((item) => getAssignmentBucket(item) === 'overdue');
+  const dueToday = assignments.filter((item) => getAssignmentBucket(item) === 'today');
+  const dueThisWeek = assignments.filter((item) => {
+    const bucket = getAssignmentBucket(item);
+    return bucket === 'today' || bucket === 'week';
+  });
+
+  els.edgenuityAssignmentCount.textContent = assignments.length + (assignments.length === 1 ? ' open item' : ' open items');
+  els.edgenuityCourseName.textContent = edgenuityState.courseName || 'Edgenuity course';
+  els.edgenuityOverdueCount.textContent = overdue.length + ' overdue';
+  els.edgenuityTodayCount.textContent = dueToday.length + ' due today';
+  els.edgenuityWeekCount.textContent = dueThisWeek.length + ' due this week';
+  els.edgenuityNextDue.textContent = assignments.length ? formatDueDate(assignments[0].dueAt) : 'No due date yet';
+
+  renderAssignmentList(els.edgenuityDueToday, dueToday, 'Nothing due today.');
+  renderAssignmentList(els.edgenuityDueThisWeek, dueThisWeek, 'Nothing due this week.');
+  renderAssignmentsByGroup(els.edgenuityByUnit, assignments, (assignment) => assignment.unitName || assignment.lessonName || 'Other work', 'No Edgenuity groups yet', 'Sync Edgenuity to fill this area.');
+}
+
 function renderAssignmentList(container, assignments, emptyMessage) {
   container.innerHTML = '';
   if (!assignments.length) {
@@ -274,33 +519,37 @@ function renderAssignmentList(container, assignments, emptyMessage) {
 }
 
 function renderAssignmentsByClass(assignments) {
-  els.canvasByClass.innerHTML = '';
+  renderAssignmentsByGroup(els.canvasByClass, assignments, (assignment) => assignment.courseName || 'Canvas course', 'No class groups yet', 'Sync Canvas assignments to fill this area.');
+}
+
+function renderAssignmentsByGroup(container, assignments, keyFn, emptyTitle, emptyText) {
+  container.innerHTML = '';
   if (!assignments.length) {
-    els.canvasByClass.innerHTML = '<div class="class-card"><strong>No class groups yet</strong><span class="mini">Sync Canvas assignments to fill this area.</span></div>';
+    container.innerHTML = '<div class="class-card"><strong>' + escapeHtml(emptyTitle) + '</strong><span class="mini">' + escapeHtml(emptyText) + '</span></div>';
     return;
   }
 
   const grouped = {};
   assignments.forEach((assignment) => {
-    const key = assignment.courseName || 'Canvas course';
+    const key = keyFn(assignment);
     if (!grouped[key]) {
       grouped[key] = [];
     }
     grouped[key].push(assignment);
   });
 
-  Object.keys(grouped).sort().forEach((courseName) => {
+  Object.keys(grouped).sort().forEach((groupName) => {
     const wrap = document.createElement('div');
     wrap.className = 'class-card';
     const title = document.createElement('strong');
-    title.textContent = courseName;
+    title.textContent = groupName;
     wrap.appendChild(title);
 
-    grouped[courseName].slice(0, 6).forEach((assignment) => {
+    grouped[groupName].slice(0, 6).forEach((assignment) => {
       wrap.appendChild(buildAssignmentCard(assignment));
     });
 
-    els.canvasByClass.appendChild(wrap);
+    container.appendChild(wrap);
   });
 }
 
@@ -311,15 +560,31 @@ function buildAssignmentCard(assignment) {
 
   let buttonHtml = '';
   if (assignment.htmlUrl) {
-    buttonHtml = '<a class="btn ghost" href="' + escapeHtml(assignment.htmlUrl) + '" target="_blank" rel="noopener noreferrer">Open in Canvas</a>';
+    buttonHtml = '<a class="btn ghost" href="' + escapeHtml(assignment.htmlUrl) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(assignment.openLabel || 'Open') + '</a>';
   }
 
-  card.innerHTML = '<div class="assignment-row"><span class="assignment-tag ' + bucket + '">' + escapeHtml(getBucketLabel(bucket)) + '</span><strong>' + escapeHtml(assignment.name) + '</strong><span class="assignment-meta">' + escapeHtml(assignment.courseName) + '</span><span class="assignment-meta">Due ' + escapeHtml(formatDueDate(assignment.dueAt)) + (assignment.pointsPossible != null ? ' • ' + escapeHtml(String(assignment.pointsPossible)) + ' pts' : '') + '</span></div>' + buttonHtml;
+  let sourceHtml = '';
+  if (assignment.source) {
+    sourceHtml = '<span class="calendar-source ' + escapeHtml(assignment.source) + '">' + escapeHtml(formatSourceLabel(assignment.source)) + '</span>';
+  }
+
+  const contextBits = [assignment.courseName];
+  if (assignment.unitName) {
+    contextBits.push(assignment.unitName);
+  }
+  if (assignment.lessonName) {
+    contextBits.push(assignment.lessonName);
+  }
+
+  const title = assignment.name || assignment.title || 'Untitled item';
+  const dueValue = assignment.dueAt || assignment.start;
+  card.innerHTML = '<div class="assignment-row">' + sourceHtml + '<span class="assignment-tag ' + bucket + '">' + escapeHtml(getBucketLabel(bucket)) + '</span><strong>' + escapeHtml(title) + '</strong><span class="assignment-meta">' + escapeHtml(contextBits.filter(Boolean).join(' | ')) + '</span><span class="assignment-meta">' + (assignment.source === 'google-calendar' ? 'Starts ' : 'Due ') + escapeHtml(formatDueDate(dueValue)) + (assignment.pointsPossible != null ? ' | ' + escapeHtml(String(assignment.pointsPossible)) + ' pts' : '') + (assignment.itemType ? ' | ' + escapeHtml(String(assignment.itemType)) : '') + '</span></div>' + buttonHtml;
   return card;
 }
 
 function getAssignmentBucket(assignment) {
   const due = new Date(assignment.dueAt);
+  const dueDayStart = new Date(due.getFullYear(), due.getMonth(), due.getDate());
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const tomorrowStart = new Date(todayStart);
@@ -327,13 +592,13 @@ function getAssignmentBucket(assignment) {
   const weekEnd = new Date(todayStart);
   weekEnd.setDate(weekEnd.getDate() + 7);
 
-  if (due < now) {
+  if (dueDayStart < todayStart) {
     return 'overdue';
   }
-  if (due >= todayStart && due < tomorrowStart) {
+  if (dueDayStart >= todayStart && dueDayStart < tomorrowStart) {
     return 'today';
   }
-  if (due < weekEnd) {
+  if (dueDayStart < weekEnd) {
     return 'week';
   }
   return 'later';
@@ -344,6 +609,65 @@ function getBucketLabel(bucket) {
   if (bucket === 'today') return 'Today';
   if (bucket === 'week') return 'This week';
   return 'Later';
+}
+
+function formatSourceLabel(source) {
+  if (source === 'google-calendar') return 'Google';
+  if (source === 'canvas') return 'Canvas';
+  if (source === 'edgenuity') return 'Edgenuity';
+  return 'Item';
+}
+
+function loadGoogleCalendarEvents() {
+  try {
+    return JSON.parse(localStorage.getItem(GOOGLE_CALENDAR_EVENTS_KEY) || '[]');
+  } catch (error) {
+    return [];
+  }
+}
+
+function loadGoogleCalendarName() {
+  return localStorage.getItem(GOOGLE_CALENDAR_NAME_KEY) || 'Google Calendar';
+}
+
+function toLocalDayKey(value) {
+  const date = new Date(value);
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+}
+
+function isSameDay(value, compareDate) {
+  const date = new Date(value);
+  return date.getFullYear() === compareDate.getFullYear() && date.getMonth() === compareDate.getMonth() && date.getDate() === compareDate.getDate();
+}
+
+function formatCalendarDayLabel(dayKey) {
+  const date = new Date(dayKey + 'T00:00:00');
+  return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+}
+
+function showCalendarError(message) {
+  setCalendarLoading(false);
+  els.calendarStatusBox.style.display = 'none';
+  els.calendarStatusBox.textContent = '';
+  els.calendarErrorBox.textContent = message;
+  els.calendarErrorBox.style.display = 'block';
+}
+
+function showCalendarStatus(message) {
+  if (!message) {
+    els.calendarStatusBox.style.display = 'none';
+    els.calendarStatusBox.textContent = '';
+    setCalendarLoading(false);
+    return;
+  }
+  els.calendarErrorBox.style.display = 'none';
+  els.calendarErrorBox.textContent = '';
+  els.calendarStatusBox.textContent = message;
+  els.calendarStatusBox.style.display = 'block';
+}
+
+function setCalendarLoading(on) {
+  els.calendarSection.classList.toggle('loading', !!on);
 }
 
 function loadCanvasSettings() {
@@ -362,7 +686,38 @@ function loadCanvasAssignments() {
   }
 }
 
+function loadEdgenuitySettings() {
+  try {
+    return JSON.parse(localStorage.getItem(EDGENUITY_SETTINGS_KEY) || 'null') || { apiBaseUrl: EDGENUITY_DEFAULT_API_BASE, enrollmentId: '', token: '' };
+  } catch (error) {
+    return { apiBaseUrl: EDGENUITY_DEFAULT_API_BASE, enrollmentId: '', token: '' };
+  }
+}
+
+function loadEdgenuityAssignments() {
+  try {
+    return JSON.parse(localStorage.getItem(EDGENUITY_ASSIGNMENTS_KEY) || '[]');
+  } catch (error) {
+    return [];
+  }
+}
+
+function loadEdgenuityCourseName() {
+  return localStorage.getItem('manage-my-life-edgenuity-course-name') || 'Edgenuity course';
+}
+
 function sanitizeCanvasBaseUrl(value) {
+  const text = String(value || '').trim().replace(/\/$/, '');
+  if (!text) {
+    return '';
+  }
+  if (/^https:\/\//i.test(text)) {
+    return text;
+  }
+  return 'https://' + text;
+}
+
+function sanitizeEdgenuityBaseUrl(value) {
   const text = String(value || '').trim().replace(/\/$/, '');
   if (!text) {
     return '';
