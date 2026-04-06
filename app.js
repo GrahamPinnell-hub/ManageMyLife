@@ -71,6 +71,8 @@ const els = {
   calendarStatusBox: document.getElementById('calendarStatusBox'),
   calendarItemCount: document.getElementById('calendarItemCount'),
   calendarNextItem: document.getElementById('calendarNextItem'),
+  googleCalendarPreview: document.getElementById('googleCalendarPreview'),
+  openGoogleCalendarLink: document.getElementById('openGoogleCalendarLink'),
   calendarToday: document.getElementById('calendarToday'),
   calendarWeek: document.getElementById('calendarWeek'),
   schoolSection: document.getElementById('schoolSection'),
@@ -365,9 +367,26 @@ async function syncGoogleCalendarEvents() {
 
 function renderCalendarView() {
   const items = collectCalendarItems();
+  const googleItems = (googleCalendarState.events || []).map((event) => ({
+    title: event.title,
+    start: event.start,
+    end: event.end,
+    source: 'google-calendar',
+    courseName: googleCalendarState.calendarName || 'Google Calendar',
+    unitName: event.location || '',
+    lessonName: '',
+    itemType: event.allDay ? 'All day' : '',
+    htmlUrl: event.htmlUrl || 'https://calendar.google.com/calendar/u/0/r',
+    openLabel: event.openLabel || 'Open Google Calendar'
+  }));
+
   els.calendarItemCount.textContent = items.length + (items.length === 1 ? ' item' : ' items');
   els.calendarNextItem.textContent = items.length ? buildCalendarHeadline(items[0]) : 'Nothing scheduled yet';
+  if (els.openGoogleCalendarLink) {
+    els.openGoogleCalendarLink.href = 'https://calendar.google.com/calendar/u/0/r';
+  }
 
+  renderCalendarList(els.googleCalendarPreview, googleItems.slice(0, 3), 'Sync Google Calendar to see events here.');
   const todayItems = items.filter((item) => isSameDay(item.start, new Date()));
   renderCalendarList(els.calendarToday, todayItems, 'Nothing on the calendar today.');
   renderCalendarDays(els.calendarWeek, items, 7);

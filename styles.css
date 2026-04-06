@@ -436,6 +436,19 @@ textarea {
   gap: 12px;
 }
 
+.compact-entries .entry {
+  padding: 12px;
+  gap: 6px;
+}
+
+.compact-entries .entry strong {
+  font-size: 0.88rem;
+}
+
+.compact-entries .assignment-meta {
+  font-size: 0.72rem;
+}
+
 .calendar-day {
   background: white;
   border: 1px solid var(--border);

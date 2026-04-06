@@ -387,6 +387,7 @@
         <div class="button-stack section-gap">
           <button class="btn secondary" id="rebuildCalendarBtn" type="button">Refresh school calendar</button>
           <button class="btn primary" id="syncGoogleCalendarBtn" type="button">Sync Google Calendar</button>
+          <a class="btn ghost" id="openGoogleCalendarLink" href="https://calendar.google.com/calendar/u/0/r" target="_blank" rel="noopener noreferrer">Open Google Calendar</a>
         </div>
 
         <div class="school-summary-grid two-up">
@@ -398,6 +399,16 @@
             <strong id="calendarNextItem">Nothing scheduled yet</strong>
             <span>Next thing coming up</span>
           </div>
+        </div>
+
+        <div class="school-block">
+          <div class="section-head compact-head">
+            <div>
+              <h3>Google preview</h3>
+              <p class="mini">A small look at your next Google Calendar events.</p>
+            </div>
+          </div>
+          <div class="entries compact-entries" id="googleCalendarPreview"></div>
         </div>
 
         <div class="school-block">
