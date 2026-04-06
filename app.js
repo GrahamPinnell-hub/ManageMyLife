@@ -8,6 +8,7 @@ const EDGENUITY_ASSIGNMENTS_KEY = 'manage-my-life-edgenuity-assignments';
 const EDGENUITY_DEFAULT_API_BASE = 'https://r07.core.learn.edgenuity.com';
 const GOOGLE_CALENDAR_EVENTS_KEY = 'manage-my-life-google-calendar-events';
 const GOOGLE_CALENDAR_NAME_KEY = 'manage-my-life-google-calendar-name';
+const DISMISSED_ASSIGNMENTS_KEY = 'manage-my-life-dismissed-assignments';
 
 const hourButtons = Array.from(document.querySelectorAll('.hour-chip'));
 const activityButtons = Array.from(document.querySelectorAll('.activity-chip'));
@@ -94,6 +95,8 @@ const googleCalendarState = {
   events: loadGoogleCalendarEvents(),
   calendarName: loadGoogleCalendarName()
 };
+
+const dismissedAssignments = loadDismissedAssignments();
 
 function init() {
   wireButtons();
@@ -393,7 +396,7 @@ function renderCalendarView() {
 }
 
 function collectCalendarItems() {
-  const canvasItems = (canvasState.assignments || []).map((assignment) => ({
+  const canvasItems = (canvasState.assignments || []).filter((assignment) => !isDismissedAssignment(assignment)).map((assignment) => ({
     title: assignment.name,
     start: assignment.dueAt,
     source: 'canvas',
@@ -405,7 +408,7 @@ function collectCalendarItems() {
     openLabel: assignment.openLabel || 'Open in Canvas'
   }));
 
-  const edgenuityItems = (edgenuityState.assignments || []).map((assignment) => ({
+  const edgenuityItems = (edgenuityState.assignments || []).filter((assignment) => !isDismissedAssignment(assignment)).map((assignment) => ({
     title: assignment.name,
     start: assignment.dueAt,
     source: 'edgenuity',
@@ -482,8 +485,45 @@ function buildCalendarHeadline(item) {
   return item.title + ' on ' + formatDueDate(item.start);
 }
 
+
+function dismissAssignment(assignment) {
+  const assignmentId = getDismissKey(assignment);
+  if (!assignmentId) {
+    return;
+  }
+
+  const label = assignment.name || assignment.title || 'this item';
+  const ok = window.confirm('Dismiss "' + label + '" from the app? You can bring it back later by clearing dismissed items in browser storage if needed.');
+  if (!ok) {
+    return;
+  }
+
+  dismissedAssignments[assignmentId] = {
+    dismissedAt: new Date().toISOString(),
+    title: label
+  };
+  localStorage.setItem(DISMISSED_ASSIGNMENTS_KEY, JSON.stringify(dismissedAssignments));
+  renderCanvasAssignments();
+  renderEdgenuityAssignments();
+  renderCalendarView();
+  showSchoolStatus('Assignment dismissed on this device.');
+}
+
+function isDismissedAssignment(assignment) {
+  const key = getDismissKey(assignment);
+  return !!(key && dismissedAssignments[key]);
+}
+
+function getDismissKey(assignment) {
+  const baseId = assignment.id || assignment.htmlUrl || ((assignment.courseName || '') + '|' + (assignment.name || assignment.title || '') + '|' + (assignment.dueAt || assignment.start || ''));
+  if (!baseId) {
+    return '';
+  }
+  return String(assignment.source || 'assignment') + '::' + String(baseId);
+}
+
 function renderCanvasAssignments() {
-  const assignments = Array.isArray(canvasState.assignments) ? canvasState.assignments : [];
+  const assignments = (Array.isArray(canvasState.assignments) ? canvasState.assignments : []).filter((item) => !isDismissedAssignment(item));
   const courseNames = new Set(assignments.map((item) => item.courseName).filter(Boolean));
   const overdue = assignments.filter((item) => getAssignmentBucket(item) === 'overdue');
   const dueToday = assignments.filter((item) => getAssignmentBucket(item) === 'today');
@@ -505,7 +545,7 @@ function renderCanvasAssignments() {
 }
 
 function renderEdgenuityAssignments() {
-  const assignments = Array.isArray(edgenuityState.assignments) ? edgenuityState.assignments : [];
+  const assignments = (Array.isArray(edgenuityState.assignments) ? edgenuityState.assignments : []).filter((item) => !isDismissedAssignment(item));
   const overdue = assignments.filter((item) => getAssignmentBucket(item) === 'overdue');
   const dueToday = assignments.filter((item) => getAssignmentBucket(item) === 'today');
   const dueThisWeek = assignments.filter((item) => {
@@ -577,9 +617,26 @@ function buildAssignmentCard(assignment) {
   const card = document.createElement('div');
   card.className = 'entry assignment-card' + (bucket === 'overdue' ? ' overdue' : bucket === 'today' ? ' today' : '');
 
-  let buttonHtml = '';
+  const actionRow = document.createElement('div');
+  actionRow.className = 'assignment-actions';
+
   if (assignment.htmlUrl) {
-    buttonHtml = '<a class="btn ghost" href="' + escapeHtml(assignment.htmlUrl) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(assignment.openLabel || 'Open') + '</a>';
+    const openLink = document.createElement('a');
+    openLink.className = 'btn ghost';
+    openLink.href = assignment.htmlUrl;
+    openLink.target = '_blank';
+    openLink.rel = 'noopener noreferrer';
+    openLink.textContent = assignment.openLabel || 'Open';
+    actionRow.appendChild(openLink);
+  }
+
+  if (assignment.source === 'canvas' || assignment.source === 'edgenuity') {
+    const dismissButton = document.createElement('button');
+    dismissButton.type = 'button';
+    dismissButton.className = 'btn ghost dismiss-btn';
+    dismissButton.textContent = 'Dismiss';
+    dismissButton.addEventListener('click', () => dismissAssignment(assignment));
+    actionRow.appendChild(dismissButton);
   }
 
   let sourceHtml = '';
@@ -647,6 +704,15 @@ function loadGoogleCalendarEvents() {
 
 function loadGoogleCalendarName() {
   return localStorage.getItem(GOOGLE_CALENDAR_NAME_KEY) || 'Google Calendar';
+}
+
+
+function loadDismissedAssignments() {
+  try {
+    return JSON.parse(localStorage.getItem(DISMISSED_ASSIGNMENTS_KEY) || '{}');
+  } catch (error) {
+    return {};
+  }
 }
 
 function toLocalDayKey(value) {

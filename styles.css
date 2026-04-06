@@ -355,6 +355,17 @@ textarea {
   gap: 4px;
 }
 
+.assignment-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.dismiss-btn {
+  color: var(--danger);
+  border-color: rgba(158, 47, 47, 0.22);
+}
+
 .assignment-tag {
   display: inline-flex;
   align-items: center;
