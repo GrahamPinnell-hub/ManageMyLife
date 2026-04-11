@@ -523,7 +523,9 @@ function getDismissKey(assignment) {
 }
 
 function renderCanvasAssignments() {
-  const assignments = (Array.isArray(canvasState.assignments) ? canvasState.assignments : []).filter((item) => !isDismissedAssignment(item));
+  const assignments = (Array.isArray(canvasState.assignments) ? canvasState.assignments : [])
+    .map((item) => ({ ...item, source: item.source || 'canvas', openLabel: item.openLabel || 'Open in Canvas' }))
+    .filter((item) => !isDismissedAssignment(item));
   const courseNames = new Set(assignments.map((item) => item.courseName).filter(Boolean));
   const overdue = assignments.filter((item) => getAssignmentBucket(item) === 'overdue');
   const dueToday = assignments.filter((item) => getAssignmentBucket(item) === 'today');
@@ -545,7 +547,9 @@ function renderCanvasAssignments() {
 }
 
 function renderEdgenuityAssignments() {
-  const assignments = (Array.isArray(edgenuityState.assignments) ? edgenuityState.assignments : []).filter((item) => !isDismissedAssignment(item));
+  const assignments = (Array.isArray(edgenuityState.assignments) ? edgenuityState.assignments : [])
+    .map((item) => ({ ...item, source: item.source || 'edgenuity', openLabel: item.openLabel || 'Open in Edgenuity' }))
+    .filter((item) => !isDismissedAssignment(item));
   const overdue = assignments.filter((item) => getAssignmentBucket(item) === 'overdue');
   const dueToday = assignments.filter((item) => getAssignmentBucket(item) === 'today');
   const dueThisWeek = assignments.filter((item) => {
@@ -617,6 +621,47 @@ function buildAssignmentCard(assignment) {
   const card = document.createElement('div');
   card.className = 'entry assignment-card' + (bucket === 'overdue' ? ' overdue' : bucket === 'today' ? ' today' : '');
 
+  const row = document.createElement('div');
+  row.className = 'assignment-row';
+
+  if (assignment.source) {
+    const source = document.createElement('span');
+    source.className = 'calendar-source ' + assignment.source;
+    source.textContent = formatSourceLabel(assignment.source);
+    row.appendChild(source);
+  }
+
+  const tag = document.createElement('span');
+  tag.className = 'assignment-tag ' + bucket;
+  tag.textContent = getBucketLabel(bucket);
+  row.appendChild(tag);
+
+  const title = document.createElement('strong');
+  title.textContent = assignment.name || assignment.title || 'Untitled item';
+  row.appendChild(title);
+
+  const contextBits = [assignment.courseName];
+  if (assignment.unitName) {
+    contextBits.push(assignment.unitName);
+  }
+  if (assignment.lessonName) {
+    contextBits.push(assignment.lessonName);
+  }
+
+  const context = document.createElement('span');
+  context.className = 'assignment-meta';
+  context.textContent = contextBits.filter(Boolean).join(' | ');
+  row.appendChild(context);
+
+  const dueValue = assignment.dueAt || assignment.start;
+  const due = document.createElement('span');
+  due.className = 'assignment-meta';
+  due.textContent = (assignment.source === 'google-calendar' ? 'Starts ' : 'Due ') + formatDueDate(dueValue)
+    + (assignment.pointsPossible != null ? ' | ' + String(assignment.pointsPossible) + ' pts' : '')
+    + (assignment.itemType ? ' | ' + String(assignment.itemType) : '');
+  row.appendChild(due);
+  card.appendChild(row);
+
   const actionRow = document.createElement('div');
   actionRow.className = 'assignment-actions';
 
@@ -639,27 +684,14 @@ function buildAssignmentCard(assignment) {
     actionRow.appendChild(dismissButton);
   }
 
-  let sourceHtml = '';
-  if (assignment.source) {
-    sourceHtml = '<span class="calendar-source ' + escapeHtml(assignment.source) + '">' + escapeHtml(formatSourceLabel(assignment.source)) + '</span>';
+  if (actionRow.children.length) {
+    card.appendChild(actionRow);
   }
-
-  const contextBits = [assignment.courseName];
-  if (assignment.unitName) {
-    contextBits.push(assignment.unitName);
-  }
-  if (assignment.lessonName) {
-    contextBits.push(assignment.lessonName);
-  }
-
-  const title = assignment.name || assignment.title || 'Untitled item';
-  const dueValue = assignment.dueAt || assignment.start;
-  card.innerHTML = '<div class="assignment-row">' + sourceHtml + '<span class="assignment-tag ' + bucket + '">' + escapeHtml(getBucketLabel(bucket)) + '</span><strong>' + escapeHtml(title) + '</strong><span class="assignment-meta">' + escapeHtml(contextBits.filter(Boolean).join(' | ')) + '</span><span class="assignment-meta">' + (assignment.source === 'google-calendar' ? 'Starts ' : 'Due ') + escapeHtml(formatDueDate(dueValue)) + (assignment.pointsPossible != null ? ' | ' + escapeHtml(String(assignment.pointsPossible)) + ' pts' : '') + (assignment.itemType ? ' | ' + escapeHtml(String(assignment.itemType)) : '') + '</span></div>' + buttonHtml;
   return card;
 }
 
 function getAssignmentBucket(assignment) {
-  const due = new Date(assignment.dueAt);
+  const due = new Date(assignment.dueAt || assignment.start);
   const dueDayStart = new Date(due.getFullYear(), due.getMonth(), due.getDate());
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
