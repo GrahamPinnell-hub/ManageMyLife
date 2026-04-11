@@ -671,3 +671,66 @@ select {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.fitness-coach-card {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 12px;
+  align-items: stretch;
+  border: 1px solid rgba(15, 108, 93, 0.18);
+  border-radius: 24px;
+  padding: 16px;
+  background:
+    radial-gradient(circle at top left, rgba(15, 108, 93, 0.16), transparent 34%),
+    linear-gradient(135deg, #ffffff 0%, #f3fbf7 100%);
+  box-shadow: 0 12px 28px rgba(15, 108, 93, 0.08);
+}
+
+.fitness-coach-card h3 {
+  margin: 4px 0 4px;
+  font-size: 1.02rem;
+  line-height: 1.25;
+}
+
+.coach-note {
+  display: flex;
+  align-items: center;
+  min-height: 96px;
+  border-radius: 20px;
+  padding: 14px;
+  background: #0f6c5d;
+  color: #ffffff;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.quick-log-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.quick-log-grid .chip {
+  min-height: 46px;
+  border-color: rgba(15, 108, 93, 0.22);
+  background: #ecf7f2;
+  color: #064b41;
+}
+
+.quick-log-grid .chip:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+@media (max-width: 640px) {
+  .fitness-coach-card {
+    grid-template-columns: 1fr;
+  }
+
+  .coach-note {
+    min-height: auto;
+  }
+
+  .quick-log-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

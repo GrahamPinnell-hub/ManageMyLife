@@ -33,6 +33,7 @@ const activityButtons = Array.from(document.querySelectorAll('.activity-chip'));
 const dashboardTiles = Array.from(document.querySelectorAll('.dashboard-tile'));
 const fitnessTabs = Array.from(document.querySelectorAll('.fitness-tab'));
 const foodPresetButtons = Array.from(document.querySelectorAll('.food-preset'));
+const fitnessQuickButtons = Array.from(document.querySelectorAll('.fitness-quick'));
 
 const els = {
   appCard: document.getElementById('appCard'),
@@ -134,6 +135,8 @@ const els = {
   fitnessWaterTarget: document.getElementById('fitnessWaterTarget'),
   fitnessSleepTarget: document.getElementById('fitnessSleepTarget'),
   fitnessWorkoutTarget: document.getElementById('fitnessWorkoutTarget'),
+  fitnessProfileSummary: document.getElementById('fitnessProfileSummary'),
+  fitnessDailyFocus: document.getElementById('fitnessDailyFocus'),
   fitnessReadinessScore: document.getElementById('fitnessReadinessScore'),
   fitnessProteinProgress: document.getElementById('fitnessProteinProgress'),
   fitnessCaloriesProgress: document.getElementById('fitnessCaloriesProgress'),
@@ -224,6 +227,7 @@ function wireButtons() {
   if (els.addFoodBtn) els.addFoodBtn.addEventListener('click', addFitnessFood);
   fitnessTabs.forEach((button) => button.addEventListener('click', () => showFitnessTab(button.getAttribute('data-fitness-tab'))));
   foodPresetButtons.forEach((button) => button.addEventListener('click', () => applyFoodPreset(button)));
+  fitnessQuickButtons.forEach((button) => button.addEventListener('click', () => applyFitnessQuickLog(button)));
 }
 
 
@@ -1293,6 +1297,24 @@ function applyFoodPreset(button) {
   els.foodProtein.value = button.getAttribute('data-protein') || '';
 }
 
+function applyFitnessQuickLog(button) {
+  const field = button.getAttribute('data-fitness-field');
+  const delta = Number(button.getAttribute('data-delta') || 0);
+  const inputByField = {
+    water: els.fitnessWater,
+    steps: els.fitnessSteps,
+    activeMinutes: els.fitnessActiveMinutes,
+    sleep: els.fitnessSleep
+  };
+  const input = inputByField[field];
+  if (!input) {
+    return;
+  }
+  const nextValue = Math.max(0, Number(input.value || 0) + delta);
+  input.value = field === 'sleep' ? nextValue.toFixed(1).replace(/\.0$/, '') : String(Math.round(nextValue));
+  saveFitnessDay();
+}
+
 function renderFitness() {
   if (!els.fitnessDate) {
     return;
@@ -1308,6 +1330,8 @@ function renderFitness() {
   if (els.fitnessWaterTarget) els.fitnessWaterTarget.textContent = 'Water goal: ' + (profile.waterGoal || 0) + ' cups';
   if (els.fitnessSleepTarget) els.fitnessSleepTarget.textContent = 'Sleep goal: ' + (profile.sleepGoal || 0) + ' hrs';
   if (els.fitnessWorkoutTarget) els.fitnessWorkoutTarget.textContent = 'Workout goal: ' + (profile.workoutGoal || 0) + '/week';
+  if (els.fitnessProfileSummary) els.fitnessProfileSummary.textContent = profile.age + ' year old ' + profile.sex + ' | ' + profile.startingWeight + ' lb | ' + profile.displayHeight;
+  if (els.fitnessDailyFocus) els.fitnessDailyFocus.textContent = getFitnessFocus(day, profile, totals);
   renderFitnessFoodList(day);
   renderFitnessHistory();
 }
@@ -1361,6 +1385,25 @@ function getFoodTotals(day) {
   }), { calories: 0, protein: 0 });
 }
 
+function getFitnessFocus(day, profile, totals) {
+  if (!day.weight && !day.steps && !day.water && !day.sleep && !totals.calories) {
+    return 'Start with weight, water, steps, sleep, and one food log.';
+  }
+  if (totals.protein < profile.proteinGoal * 0.5) {
+    return 'Protein is the biggest gap right now. Add a meal or shake when you can.';
+  }
+  if (day.water < profile.waterGoal * 0.6) {
+    return 'Hydration is behind. A quick water log would help the day look better.';
+  }
+  if (day.steps < profile.stepGoal * 0.6) {
+    return 'Movement is the next easy win. A short walk can move this up fast.';
+  }
+  if (day.sleep && day.sleep < profile.sleepGoal - 1) {
+    return 'Sleep was low, so keep the workout reasonable and recover well tonight.';
+  }
+  return 'Looking balanced. Keep logging normally and do not overthink it.';
+}
+
 function calculateReadiness(day, profile) {
   let score = 50;
   const sleepGoal = Number(profile.sleepGoal || 8);
@@ -1402,7 +1445,7 @@ function persistFitnessDays() {
 function loadFitnessProfile() {
   try {
     const saved = JSON.parse(localStorage.getItem(FITNESS_PROFILE_KEY) || 'null') || {};
-    return normalizeFitnessProfile({ ...FITNESS_FIXED_PROFILE, ...saved });
+    return normalizeFitnessProfile({ ...saved, ...FITNESS_FIXED_PROFILE });
   } catch (error) {
     return { ...FITNESS_FIXED_PROFILE };
   }
