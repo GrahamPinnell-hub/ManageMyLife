@@ -567,3 +567,107 @@ select {
 .fitness-food-presets .chip {
   min-height: 56px;
 }
+
+.compact-fitness-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.target-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.target-strip span {
+  border: 1px solid rgba(15, 108, 93, 0.18);
+  border-radius: 16px;
+  background: #eef8f3;
+  color: #074f43;
+  font-weight: 800;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.compact-log-box {
+  padding: 14px;
+}
+
+.compact-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.compact-title-row h3 {
+  margin: 0;
+}
+
+.compact-field-grid {
+  gap: 8px;
+}
+
+.compact-field-grid .field,
+.compact-log-box .field {
+  gap: 6px;
+}
+
+.compact-field-grid input,
+.compact-field-grid select,
+.compact-log-box textarea {
+  border-radius: 14px;
+  padding: 11px 12px;
+  min-height: 44px;
+}
+
+.compact-toggle {
+  border-radius: 14px;
+  padding: 10px 12px;
+  margin-top: 8px;
+}
+
+.compact-details {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 10px 12px;
+}
+
+.compact-details summary {
+  cursor: pointer;
+  font-weight: 900;
+  color: var(--ink);
+}
+
+.compact-details .field,
+.compact-details .school-summary-grid {
+  margin-top: 10px;
+}
+
+.compact-presets {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.fitness-food-presets.compact-presets .chip {
+  min-height: 46px;
+  padding: 8px 10px;
+}
+
+.compact-history .overview-item strong {
+  font-size: 1rem;
+}
+
+@media (max-width: 520px) {
+  .target-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .compact-presets {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

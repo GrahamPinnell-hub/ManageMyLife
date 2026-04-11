@@ -492,14 +492,8 @@
 
         <div id="fitnessStatusBox" class="status"></div>
 
-        <div class="fitness-tabs section-gap">
-          <button class="chip fitness-tab active" type="button" data-fitness-tab="today">Today</button>
-          <button class="chip fitness-tab" type="button" data-fitness-tab="profile">Profile</button>
-          <button class="chip fitness-tab" type="button" data-fitness-tab="history">History</button>
-        </div>
-
         <div class="fitness-panel" id="fitnessTodayPanel">
-          <div class="school-summary-grid">
+          <div class="school-summary-grid compact-fitness-grid">
             <div class="overview-item readiness-card">
               <strong id="fitnessReadinessScore">--</strong>
               <span>Readiness score</span>
@@ -518,12 +512,21 @@
             </div>
           </div>
 
-          <div class="control-box section-gap">
-            <h3>Daily check-in</h3>
+          <div class="target-strip" aria-label="Fitness targets">
+            <span id="fitnessWaterTarget">Water goal: -- cups</span>
+            <span id="fitnessSleepTarget">Sleep goal: -- hrs</span>
+            <span id="fitnessWorkoutTarget">Workout goal: --/week</span>
+          </div>
+
+          <div class="control-box section-gap compact-log-box">
+            <div class="compact-title-row">
+              <h3>Daily log</h3>
+              <span class="mini">Only the stuff that changes today.</span>
+            </div>
             <label class="field">Date
               <input id="fitnessDate" type="date">
             </label>
-            <div class="school-summary-grid two-up">
+            <div class="school-summary-grid two-up compact-field-grid">
               <label class="field">Weight (lb)
                 <input id="fitnessWeight" type="number" min="0" step="0.1" placeholder="Example: 160">
               </label>
@@ -533,41 +536,49 @@
               <label class="field">Steps
                 <input id="fitnessSteps" type="number" min="0" step="1" placeholder="10000">
               </label>
-              <label class="field">Active minutes
+              <label class="field">Active min
                 <input id="fitnessActiveMinutes" type="number" min="0" step="1" placeholder="45">
               </label>
               <label class="field">Resting HR
                 <input id="fitnessRestingHr" type="number" min="0" step="1" placeholder="60">
               </label>
-              <label class="field">Avg HR
-                <input id="fitnessAvgHr" type="number" min="0" step="1" placeholder="80">
-              </label>
-              <label class="field">Sleep (hours)
+              <label class="field">Sleep (hrs)
                 <input id="fitnessSleep" type="number" min="0" step="0.25" placeholder="8">
               </label>
-              <label class="field">Mood / energy (1-10)
-                <input id="fitnessMood" type="number" min="1" max="10" step="1" placeholder="7">
-              </label>
             </div>
-            <label class="field">Soreness / notes
-              <textarea id="fitnessNotes" placeholder="Anything that matters today"></textarea>
-            </label>
-            <label class="toggle-row">
+            <label class="toggle-row compact-toggle">
               <input id="fitnessWorkoutDone" type="checkbox">
-              <span>Workout completed today</span>
+              <span>Workout done today</span>
             </label>
+            <details class="compact-details">
+              <summary>Optional extras</summary>
+              <div class="school-summary-grid two-up compact-field-grid">
+                <label class="field">Avg HR
+                  <input id="fitnessAvgHr" type="number" min="0" step="1" placeholder="80">
+                </label>
+                <label class="field">Mood / energy (1-10)
+                  <input id="fitnessMood" type="number" min="1" max="10" step="1" placeholder="7">
+                </label>
+              </div>
+              <label class="field">Notes
+                <textarea id="fitnessNotes" placeholder="Anything that matters today"></textarea>
+              </label>
+            </details>
             <div class="button-stack">
-              <button class="btn primary" id="saveFitnessDayBtn" type="button">Save daily check-in</button>
+              <button class="btn primary" id="saveFitnessDayBtn" type="button">Save daily log</button>
             </div>
           </div>
 
-          <div class="control-box section-gap">
-            <h3>Food log</h3>
-            <div class="school-summary-grid two-up">
-              <label class="field">Meal / food
+          <div class="control-box section-gap compact-log-box">
+            <div class="compact-title-row">
+              <h3>Food</h3>
+              <span class="mini">Quick calories and protein.</span>
+            </div>
+            <div class="school-summary-grid two-up compact-field-grid">
+              <label class="field">Food
                 <input id="foodName" type="text" placeholder="Chicken bowl">
               </label>
-              <label class="field">Meal time
+              <label class="field">Meal
                 <select id="foodMeal">
                   <option>Breakfast</option>
                   <option>Lunch</option>
@@ -582,101 +593,40 @@
                 <input id="foodProtein" type="number" min="0" step="1" placeholder="30">
               </label>
             </div>
-            <div class="chip-grid fitness-food-presets">
-              <button class="chip food-preset" type="button" data-food-name="Protein shake" data-calories="200" data-protein="30">Protein shake</button>
+            <div class="chip-grid fitness-food-presets compact-presets">
+              <button class="chip food-preset" type="button" data-food-name="Protein shake" data-calories="200" data-protein="30">Shake</button>
               <button class="chip food-preset" type="button" data-food-name="Eggs" data-calories="210" data-protein="18">Eggs</button>
               <button class="chip food-preset" type="button" data-food-name="Chicken" data-calories="250" data-protein="45">Chicken</button>
-              <button class="chip food-preset" type="button" data-food-name="School lunch" data-calories="650" data-protein="25">School lunch</button>
+              <button class="chip food-preset" type="button" data-food-name="School lunch" data-calories="650" data-protein="25">Lunch</button>
             </div>
-            <div class="button-stack">
+            <div class="button-stack compact-buttons">
               <button class="btn primary" id="addFoodBtn" type="button">Add food</button>
             </div>
-            <div class="entries" id="fitnessFoodList"></div>
+            <div class="entries compact-entries" id="fitnessFoodList"></div>
           </div>
-        </div>
 
-        <div class="fitness-panel hidden" id="fitnessProfilePanel">
-          <div class="control-box section-gap">
-            <h3>Body goals and targets</h3>
-            <div class="school-summary-grid two-up">
-              <label class="field">Height
-                <input id="fitnessHeight" type="text" placeholder="5'10 or 70 in">
-              </label>
-              <label class="field">Age
-                <input id="fitnessAge" type="number" min="0" step="1" placeholder="17">
-              </label>
-              <label class="field">Sex for calorie estimate
-                <select id="fitnessSex">
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                </select>
-              </label>
-              <label class="field">Goal
-                <select id="fitnessGoal">
-                  <option value="maintain">Maintain</option>
-                  <option value="gain-muscle">Gain muscle</option>
-                  <option value="lose-fat">Lose fat</option>
-                  <option value="performance">Improve performance</option>
-                </select>
-              </label>
-              <label class="field">Activity level
-                <select id="fitnessActivityLevel">
-                  <option value="light">Light</option>
-                  <option value="moderate">Moderate</option>
-                  <option value="high">High</option>
-                  <option value="athlete">Athlete</option>
-                </select>
-              </label>
-              <label class="field">Protein goal (g)
-                <input id="fitnessProteinGoal" type="number" min="0" step="1" placeholder="140">
-              </label>
-              <label class="field">Calorie goal
-                <input id="fitnessCalorieGoal" type="number" min="0" step="1" placeholder="2600">
-              </label>
-              <label class="field">Water goal (cups)
-                <input id="fitnessWaterGoal" type="number" min="0" step="1" placeholder="8">
-              </label>
-              <label class="field">Step goal
-                <input id="fitnessStepGoal" type="number" min="0" step="1" placeholder="10000">
-              </label>
-              <label class="field">Sleep goal (hours)
-                <input id="fitnessSleepGoal" type="number" min="0" step="0.25" placeholder="8">
-              </label>
-              <label class="field">Workout goal / week
-                <input id="fitnessWorkoutGoal" type="number" min="0" step="1" placeholder="4">
-              </label>
+          <details class="control-box section-gap compact-details compact-history" id="fitnessHistoryPanel">
+            <summary>History and trends</summary>
+            <div class="school-summary-grid compact-fitness-grid section-gap">
+              <div class="overview-item">
+                <strong id="fitnessWeightTrend">--</strong>
+                <span>7-day avg weight</span>
+              </div>
+              <div class="overview-item">
+                <strong id="fitnessWorkoutStreak">0 days</strong>
+                <span>Workout streak</span>
+              </div>
+              <div class="overview-item">
+                <strong id="fitnessAvgSteps">0 steps</strong>
+                <span>7-day avg steps</span>
+              </div>
+              <div class="overview-item">
+                <strong id="fitnessAvgSleep">0 hrs</strong>
+                <span>7-day avg sleep</span>
+              </div>
             </div>
-            <label class="field">Restrictions / injuries / notes
-              <textarea id="fitnessRestrictions" placeholder="Anything to remember before planning workouts"></textarea>
-            </label>
-            <div class="button-stack">
-              <button class="btn secondary" id="suggestFitnessGoalsBtn" type="button">Suggest my goals</button>
-              <button class="btn primary" id="saveFitnessProfileBtn" type="button">Save fitness profile</button>
-            </div>
-            <p class="notice">This is a personal organizer, not medical advice. For major diet, weight, or training changes, loop in a parent/guardian, doctor, coach, or trainer.</p>
-          </div>
-        </div>
-
-        <div class="fitness-panel hidden" id="fitnessHistoryPanel">
-          <div class="school-summary-grid section-gap">
-            <div class="overview-item">
-              <strong id="fitnessWeightTrend">--</strong>
-              <span>7-day average weight</span>
-            </div>
-            <div class="overview-item">
-              <strong id="fitnessWorkoutStreak">0 days</strong>
-              <span>Workout streak</span>
-            </div>
-            <div class="overview-item">
-              <strong id="fitnessAvgSteps">0 steps</strong>
-              <span>7-day average steps</span>
-            </div>
-            <div class="overview-item">
-              <strong id="fitnessAvgSleep">0 hrs</strong>
-              <span>7-day average sleep</span>
-            </div>
-          </div>
-          <div class="entries section-gap" id="fitnessHistoryList"></div>
+            <div class="entries section-gap compact-entries" id="fitnessHistoryList"></div>
+          </details>
         </div>
       </section>
 
