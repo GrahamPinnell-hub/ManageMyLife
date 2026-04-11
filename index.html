@@ -527,6 +527,29 @@
             <div class="coach-note" id="fitnessDailyFocus">Log today to get a focus note.</div>
           </div>
 
+          <div class="school-summary-grid two-up section-gap fitness-command-grid">
+            <div class="overview-item fitness-score-card">
+              <strong id="fitnessWeeklyScore">--</strong>
+              <span id="fitnessWeeklyScoreLabel">Weekly fitness score</span>
+            </div>
+            <div class="overview-item">
+              <strong id="fitnessTodayWorkoutTitle">Today workout</strong>
+              <span id="fitnessTodayWorkoutFocus">Loading plan...</span>
+            </div>
+          </div>
+
+          <div class="control-box section-gap workout-card" id="fitnessWorkoutPlan"></div>
+
+          <details class="control-box section-gap compact-details checklist-details">
+            <summary>Morning checklist</summary>
+            <div class="checklist-list" id="fitnessMorningChecklist"></div>
+          </details>
+
+          <details class="control-box section-gap compact-details checklist-details">
+            <summary>Night checklist</summary>
+            <div class="checklist-list" id="fitnessNightChecklist"></div>
+          </details>
+
           <div class="control-box section-gap compact-log-box">
             <div class="compact-title-row">
               <h3>Daily log</h3>
@@ -608,12 +631,6 @@
                 <input id="foodProtein" type="number" min="0" step="1" placeholder="30">
               </label>
             </div>
-            <div class="chip-grid fitness-food-presets compact-presets">
-              <button class="chip food-preset" type="button" data-food-name="Protein shake" data-calories="200" data-protein="30">Shake</button>
-              <button class="chip food-preset" type="button" data-food-name="Eggs" data-calories="210" data-protein="18">Eggs</button>
-              <button class="chip food-preset" type="button" data-food-name="Chicken" data-calories="250" data-protein="45">Chicken</button>
-              <button class="chip food-preset" type="button" data-food-name="School lunch" data-calories="650" data-protein="25">Lunch</button>
-            </div>
             <div class="button-stack compact-buttons">
               <button class="btn primary" id="addFoodBtn" type="button">Add food</button>
             </div>
@@ -622,6 +639,13 @@
 
           <details class="control-box section-gap compact-details compact-history" id="fitnessHistoryPanel">
             <summary>History and trends</summary>
+            <div class="weight-chart-wrap section-gap">
+              <div class="compact-title-row">
+                <h3>Weight trend</h3>
+                <span class="mini" id="fitnessWeightTrendSummary">Log weight to start the graph.</span>
+              </div>
+              <div class="weight-chart" id="fitnessWeightChart"></div>
+            </div>
             <div class="school-summary-grid compact-fitness-grid section-gap">
               <div class="overview-item">
                 <strong id="fitnessWeightTrend">--</strong>

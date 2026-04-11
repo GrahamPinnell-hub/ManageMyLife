@@ -17,15 +17,140 @@ const FITNESS_FIXED_PROFILE = {
   startingWeight: 200.2,
   age: 17,
   sex: 'male',
-  goal: 'maintain',
+  goal: 'gain-muscle',
   activityLevel: 'moderate',
   proteinGoal: 150,
   calorieGoal: 2850,
   waterGoal: 12,
   stepGoal: 10000,
   sleepGoal: 9,
-  workoutGoal: 4,
+  workoutGoal: 5,
   restrictions: "Measured 6'3 with 2-inch sole shoes, so goal estimates use about 6'1 actual height."
+};
+
+const FITNESS_WEEKLY_PLAN = [
+  {
+    day: 0,
+    key: 'sabbath-rest',
+    title: 'Sabbath rest',
+    focus: 'Church, recovery, easy walk if you want it.',
+    type: 'Rest',
+    time: 'Optional 10-20 min walk',
+    exercises: [
+      ['Sabbath rest', 'No lifting', 'Let your body catch up.'],
+      ['Easy walk or stretch', 'Optional', 'Only if it feels peaceful, not like a chore.']
+    ]
+  },
+  {
+    day: 1,
+    key: 'push-chest',
+    title: 'Push: chest emphasis',
+    focus: 'Bigger pecs, shoulders, and triceps without maxing out.',
+    type: 'Lift',
+    time: '55-70 min',
+    exercises: [
+      ['Incline dumbbell press', '4 x 8-12', 'Lead with this for upper chest.'],
+      ['Machine chest press', '3 x 8-12', 'Controlled reps, no bouncing.'],
+      ['Cable or pec-deck fly', '3 x 12-15', 'Stretch, squeeze, stay smooth.'],
+      ['Seated dumbbell shoulder press', '3 x 8-10', 'Stop 1-2 reps before failure.'],
+      ['Lateral raises', '3 x 12-20', 'Make shoulders wider.'],
+      ['Rope triceps pressdown', '3 x 10-15', 'Full lockout, elbows still.']
+    ]
+  },
+  {
+    day: 2,
+    key: 'pull-back-biceps',
+    title: 'Pull: back and biceps',
+    focus: 'Back width, posture, and bigger arms.',
+    type: 'Lift',
+    time: '55-70 min',
+    exercises: [
+      ['Pull-ups or lat pulldown', '4 x 6-10', 'Use assisted if needed.'],
+      ['Chest-supported row', '3 x 8-12', 'Pull elbows back, chest tall.'],
+      ['Seated cable row', '3 x 10-12', 'Pause for a beat at the squeeze.'],
+      ['Rear delt fly', '3 x 12-20', 'Keeps shoulders balanced.'],
+      ['Dumbbell or EZ-bar curl', '3 x 8-12', 'No swinging.'],
+      ['Hammer curl', '3 x 10-14', 'Forearms and thicker arms.']
+    ]
+  },
+  {
+    day: 3,
+    key: 'wednesday-recovery',
+    title: 'Wednesday light recovery',
+    focus: 'Church/work night: move, recover, do not crush yourself.',
+    type: 'Recovery',
+    time: '20-35 min',
+    exercises: [
+      ['Easy walk', '20-30 min', 'Keep it conversational.'],
+      ['Hip and shoulder mobility', '5-8 min', 'Loosen up from school.'],
+      ['Push-up form practice', '2 easy sets', 'Stop way before failure.'],
+      ['Early wind-down', '10 min', 'Protect sleep after the 6-9 block.']
+    ]
+  },
+  {
+    day: 4,
+    key: 'lower-core',
+    title: 'Lower body and core',
+    focus: 'Legs, core, and athletic base.',
+    type: 'Lift',
+    time: '55-70 min',
+    exercises: [
+      ['Leg press or squat', '4 x 8-12', 'Choose the one you can do cleanly.'],
+      ['Romanian deadlift', '3 x 8-10', 'Hinge, stretch hamstrings, flat back.'],
+      ['Leg curl', '3 x 10-15', 'Control the lowering.'],
+      ['Walking lunge or split squat', '2 x 10 each leg', 'Use light weight first.'],
+      ['Calf raise', '4 x 10-15', 'Pause at the top.'],
+      ['Cable crunch or plank', '3 sets', 'Core, not neck.']
+    ]
+  },
+  {
+    day: 5,
+    key: 'upper-chest-arms',
+    title: 'Upper chest and arms',
+    focus: 'Extra chest and arm volume to balance your torso.',
+    type: 'Lift',
+    time: '50-65 min',
+    exercises: [
+      ['Incline machine press', '3 x 8-12', 'Try to beat Monday by one clean rep.'],
+      ['Flat dumbbell press', '3 x 8-12', 'Smooth and controlled.'],
+      ['Cable fly low-to-high', '3 x 12-15', 'Upper chest angle.'],
+      ['Preacher or machine curl', '3 x 10-12', 'Strict biceps.'],
+      ['Overhead triceps extension', '3 x 10-15', 'Long head of triceps.'],
+      ['Lateral raise finisher', '2 x 15-25', 'Light burn, clean reps.']
+    ]
+  },
+  {
+    day: 6,
+    key: 'home-pump-conditioning',
+    title: 'Home/gym pump plus conditioning',
+    focus: 'Use home dumbbells or gym. Finish the week strong, not wrecked.',
+    type: 'Hybrid',
+    time: '40-55 min',
+    exercises: [
+      ['Pull-up bar work', '4 sets', 'Assisted/negatives are fine.'],
+      ['Dumbbell floor press', '4 x 10-15', 'Use 30s or 40s if clean.'],
+      ['One-arm dumbbell row', '3 x 10-15 each', 'Use 40 if controlled.'],
+      ['Dumbbell curl to press', '3 x 8-12', 'Use 15s or 30s.'],
+      ['Farmer carry', '4 x 30-45 sec', 'Core and grip.'],
+      ['Incline walk or bike', '10-15 min', 'Easy conditioning.']
+    ]
+  }
+];
+
+const FITNESS_CHECKLISTS = {
+  morning: [
+    ['weighIn', 'Weigh in'],
+    ['waterStart', 'Drink water'],
+    ['reviewWorkout', 'Check workout'],
+    ['checkCalendar', 'Check school/calendar']
+  ],
+  night: [
+    ['finalWater', 'Final water check'],
+    ['finalSteps', 'Final Apple Watch steps'],
+    ['proteinCheck', 'Protein check'],
+    ['watchStats', 'Apple Watch HR/sleep notes'],
+    ['sleepPlan', 'Set sleep plan']
+  ]
 };
 
 const hourButtons = Array.from(document.querySelectorAll('.hour-chip'));
@@ -137,6 +262,15 @@ const els = {
   fitnessWorkoutTarget: document.getElementById('fitnessWorkoutTarget'),
   fitnessProfileSummary: document.getElementById('fitnessProfileSummary'),
   fitnessDailyFocus: document.getElementById('fitnessDailyFocus'),
+  fitnessWeeklyScore: document.getElementById('fitnessWeeklyScore'),
+  fitnessWeeklyScoreLabel: document.getElementById('fitnessWeeklyScoreLabel'),
+  fitnessTodayWorkoutTitle: document.getElementById('fitnessTodayWorkoutTitle'),
+  fitnessTodayWorkoutFocus: document.getElementById('fitnessTodayWorkoutFocus'),
+  fitnessWorkoutPlan: document.getElementById('fitnessWorkoutPlan'),
+  fitnessMorningChecklist: document.getElementById('fitnessMorningChecklist'),
+  fitnessNightChecklist: document.getElementById('fitnessNightChecklist'),
+  fitnessWeightChart: document.getElementById('fitnessWeightChart'),
+  fitnessWeightTrendSummary: document.getElementById('fitnessWeightTrendSummary'),
   fitnessReadinessScore: document.getElementById('fitnessReadinessScore'),
   fitnessProteinProgress: document.getElementById('fitnessProteinProgress'),
   fitnessCaloriesProgress: document.getElementById('fitnessCaloriesProgress'),
@@ -1200,22 +1334,38 @@ function getLatestFitnessValue(key) {
 
 function getFitnessDay(dateKey) {
   if (!fitnessState.days[dateKey]) {
-    fitnessState.days[dateKey] = {
-      date: dateKey,
-      weight: 0,
-      water: 0,
-      steps: 0,
-      activeMinutes: 0,
-      restingHr: 0,
-      avgHr: 0,
-      sleep: 0,
-      mood: 0,
-      notes: '',
-      workoutDone: false,
-      foods: []
-    };
+    fitnessState.days[dateKey] = createFitnessDay(dateKey);
+  } else {
+    fitnessState.days[dateKey] = normalizeFitnessDay(fitnessState.days[dateKey], dateKey);
   }
   return fitnessState.days[dateKey];
+}
+
+function createFitnessDay(dateKey) {
+  return normalizeFitnessDay({ date: dateKey }, dateKey);
+}
+
+function normalizeFitnessDay(day, dateKey) {
+  const existing = day || {};
+  return {
+    date: existing.date || dateKey,
+    weight: Number(existing.weight || 0),
+    water: Number(existing.water || 0),
+    steps: Number(existing.steps || 0),
+    activeMinutes: Number(existing.activeMinutes || 0),
+    restingHr: Number(existing.restingHr || 0),
+    avgHr: Number(existing.avgHr || 0),
+    sleep: Number(existing.sleep || 0),
+    mood: Number(existing.mood || 0),
+    notes: existing.notes || '',
+    workoutDone: !!existing.workoutDone,
+    workoutKey: existing.workoutKey || getWorkoutForDate(existing.date || dateKey).key,
+    checklists: {
+      morning: { ...((existing.checklists && existing.checklists.morning) || {}) },
+      night: { ...((existing.checklists && existing.checklists.night) || {}) }
+    },
+    foods: Array.isArray(existing.foods) ? existing.foods : []
+  };
 }
 
 function fillFitnessDay(dateKey) {
@@ -1237,7 +1387,7 @@ function fillFitnessDay(dateKey) {
 function readFitnessDayForm() {
   const dateKey = els.fitnessDate.value || todayValue();
   const day = getFitnessDay(dateKey);
-  return {
+  return normalizeFitnessDay({
     ...day,
     date: dateKey,
     weight: Number(els.fitnessWeight.value || 0),
@@ -1250,8 +1400,9 @@ function readFitnessDayForm() {
     mood: Number(els.fitnessMood.value || 0),
     notes: els.fitnessNotes.value.trim(),
     workoutDone: !!els.fitnessWorkoutDone.checked,
+    workoutKey: getWorkoutForDate(dateKey).key,
     foods: Array.isArray(day.foods) ? day.foods : []
-  };
+  }, dateKey);
 }
 
 function saveFitnessDay() {
@@ -1323,6 +1474,8 @@ function renderFitness() {
   const day = getFitnessDay(dateKey);
   const totals = getFoodTotals(day);
   const profile = fitnessState.profile;
+  const weekly = calculateWeeklyFitnessScore(dateKey, profile);
+  const workout = getWorkoutForDate(dateKey);
   els.fitnessProteinProgress.textContent = totals.protein + ' / ' + (profile.proteinGoal ? profile.proteinGoal + 'g' : 'set soon');
   els.fitnessCaloriesProgress.textContent = totals.calories + ' / ' + (profile.calorieGoal || 'set soon');
   els.fitnessStepsProgress.textContent = (day.steps || 0).toLocaleString() + ' / ' + (profile.stepGoal || 0).toLocaleString() + ' steps';
@@ -1331,9 +1484,76 @@ function renderFitness() {
   if (els.fitnessSleepTarget) els.fitnessSleepTarget.textContent = 'Sleep goal: ' + (profile.sleepGoal || 0) + ' hrs';
   if (els.fitnessWorkoutTarget) els.fitnessWorkoutTarget.textContent = 'Workout goal: ' + (profile.workoutGoal || 0) + '/week';
   if (els.fitnessProfileSummary) els.fitnessProfileSummary.textContent = profile.age + ' year old ' + profile.sex + ' | ' + profile.startingWeight + ' lb | ' + profile.displayHeight;
-  if (els.fitnessDailyFocus) els.fitnessDailyFocus.textContent = getFitnessFocus(day, profile, totals);
+  if (els.fitnessWeeklyScore) els.fitnessWeeklyScore.textContent = weekly.score + '/100';
+  if (els.fitnessWeeklyScoreLabel) els.fitnessWeeklyScoreLabel.textContent = weekly.label;
+  if (els.fitnessTodayWorkoutTitle) els.fitnessTodayWorkoutTitle.textContent = workout.title;
+  if (els.fitnessTodayWorkoutFocus) els.fitnessTodayWorkoutFocus.textContent = workout.focus;
+  if (els.fitnessDailyFocus) els.fitnessDailyFocus.textContent = getFitnessFocus(day, profile, totals, weekly, workout);
+  renderFitnessWorkout(day, workout);
+  renderFitnessChecklists(day);
   renderFitnessFoodList(day);
   renderFitnessHistory();
+}
+
+function renderFitnessWorkout(day, workout) {
+  if (!els.fitnessWorkoutPlan) {
+    return;
+  }
+  const completed = !!day.workoutDone;
+  const exercises = workout.exercises.map((exercise) => (
+    '<li><strong>' + escapeHtml(exercise[0]) + '</strong><span>' + escapeHtml(exercise[1]) + ' | ' + escapeHtml(exercise[2]) + '</span></li>'
+  )).join('');
+  els.fitnessWorkoutPlan.innerHTML =
+    '<div class="compact-title-row workout-title-row">' +
+      '<div><p class="eyebrow">Today\'s plan</p><h3>' + escapeHtml(workout.title) + '</h3><span class="mini">' + escapeHtml(workout.type) + ' | ' + escapeHtml(workout.time) + '</span></div>' +
+      '<button class="btn ' + (completed ? 'secondary' : 'primary') + '" id="fitnessWorkoutDoneBtn" type="button">' + (completed ? 'Mark not done' : 'Mark workout done') + '</button>' +
+    '</div>' +
+    '<p class="mini workout-guidance">Progress rule: when every set hits the top of the rep range with clean form, add a little weight next time. Keep 1-2 reps in reserve on most sets.</p>' +
+    '<ul class="workout-list">' + exercises + '</ul>';
+  const button = document.getElementById('fitnessWorkoutDoneBtn');
+  if (button) {
+    button.addEventListener('click', toggleFitnessWorkoutDone);
+  }
+}
+
+function toggleFitnessWorkoutDone() {
+  const dateKey = els.fitnessDate.value || todayValue();
+  const day = readFitnessDayForm();
+  day.workoutDone = !day.workoutDone;
+  els.fitnessWorkoutDone.checked = day.workoutDone;
+  fitnessState.days[dateKey] = day;
+  persistFitnessDays();
+  renderFitness();
+  showFitnessStatus(day.workoutDone ? 'Workout marked done.' : 'Workout marked not done.');
+}
+
+function renderFitnessChecklists(day) {
+  renderFitnessChecklist('morning', day, els.fitnessMorningChecklist);
+  renderFitnessChecklist('night', day, els.fitnessNightChecklist);
+}
+
+function renderFitnessChecklist(section, day, container) {
+  if (!container) {
+    return;
+  }
+  const state = (day.checklists && day.checklists[section]) || {};
+  container.innerHTML = FITNESS_CHECKLISTS[section].map(([key, label]) => (
+    '<label class="checklist-row"><input class="fitness-check" type="checkbox" data-section="' + section + '" data-key="' + key + '" ' + (state[key] ? 'checked' : '') + '><span>' + escapeHtml(label) + '</span></label>'
+  )).join('');
+  Array.from(container.querySelectorAll('.fitness-check')).forEach((checkbox) => {
+    checkbox.addEventListener('change', () => toggleFitnessChecklist(checkbox));
+  });
+}
+
+function toggleFitnessChecklist(checkbox) {
+  const dateKey = els.fitnessDate.value || todayValue();
+  const day = readFitnessDayForm();
+  const section = checkbox.getAttribute('data-section');
+  const key = checkbox.getAttribute('data-key');
+  day.checklists[section][key] = checkbox.checked;
+  fitnessState.days[dateKey] = day;
+  persistFitnessDays();
+  renderFitness();
 }
 
 function renderFitnessFoodList(day) {
@@ -1358,12 +1578,13 @@ function renderFitnessFoodList(day) {
 }
 
 function renderFitnessHistory() {
-  const days = Object.values(fitnessState.days).sort((a, b) => b.date.localeCompare(a.date));
+  const days = Object.values(fitnessState.days).map((day) => normalizeFitnessDay(day, day.date)).sort((a, b) => b.date.localeCompare(a.date));
   const last7 = days.slice(0, 7);
   els.fitnessWeightTrend.textContent = formatAverage(last7.map((day) => day.weight).filter(Boolean), ' lb');
   els.fitnessAvgSteps.textContent = formatAverage(last7.map((day) => day.steps).filter(Boolean), ' steps', true);
   els.fitnessAvgSleep.textContent = formatAverage(last7.map((day) => day.sleep).filter(Boolean), ' hrs');
   els.fitnessWorkoutStreak.textContent = calculateWorkoutStreak() + ' days';
+  renderWeightTrendChart(days);
   els.fitnessHistoryList.innerHTML = '';
   if (!days.length) {
     els.fitnessHistoryList.innerHTML = '<div class="entry"><div class="entry-top"><strong>No history yet</strong><span class="mini">Save your first daily check-in.</span></div></div>';
@@ -1378,6 +1599,42 @@ function renderFitnessHistory() {
   });
 }
 
+function renderWeightTrendChart(days) {
+  if (!els.fitnessWeightChart) {
+    return;
+  }
+  const weights = days
+    .filter((day) => Number(day.weight || 0))
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(-14);
+  if (weights.length < 2) {
+    els.fitnessWeightChart.innerHTML = '<div class="empty-chart">Log weight on at least two days to draw the trend.</div>';
+    if (els.fitnessWeightTrendSummary) els.fitnessWeightTrendSummary.textContent = 'Need two weigh-ins for a trend.';
+    return;
+  }
+  const values = weights.map((day) => Number(day.weight));
+  const min = Math.min(...values) - 1;
+  const max = Math.max(...values) + 1;
+  const width = 320;
+  const height = 120;
+  const points = weights.map((day, index) => {
+    const x = weights.length === 1 ? width / 2 : (index / (weights.length - 1)) * width;
+    const y = height - (((Number(day.weight) - min) / Math.max(1, max - min)) * height);
+    return [x, y];
+  });
+  const polyline = points.map(([x, y]) => x.toFixed(1) + ',' + y.toFixed(1)).join(' ');
+  const dots = points.map(([x, y]) => '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4"></circle>').join('');
+  const latest = values[values.length - 1];
+  const first = values[0];
+  const delta = latest - first;
+  const startDelta = latest - FITNESS_FIXED_PROFILE.startingWeight;
+  const direction = Math.abs(delta) < 0.2 ? 'stable' : delta > 0 ? 'up' : 'down';
+  els.fitnessWeightChart.innerHTML = '<svg viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Weight trend"><polyline points="' + polyline + '"></polyline>' + dots + '</svg>';
+  if (els.fitnessWeightTrendSummary) {
+    els.fitnessWeightTrendSummary.textContent = latest.toFixed(1) + ' lb now | ' + direction + ' ' + Math.abs(delta).toFixed(1) + ' lb in trend | ' + (startDelta >= 0 ? '+' : '') + startDelta.toFixed(1) + ' from start';
+  }
+}
+
 function getFoodTotals(day) {
   return (day.foods || []).reduce((totals, food) => ({
     calories: totals.calories + Number(food.calories || 0),
@@ -1385,23 +1642,35 @@ function getFoodTotals(day) {
   }), { calories: 0, protein: 0 });
 }
 
-function getFitnessFocus(day, profile, totals) {
-  if (!day.weight && !day.steps && !day.water && !day.sleep && !totals.calories) {
-    return 'Start with weight, water, steps, sleep, and one food log.';
+function getFitnessFocus(day, profile, totals, weekly, workout) {
+  const missing = [];
+  if (!day.weight) missing.push('weigh in');
+  if (day.water < profile.waterGoal) missing.push('water');
+  if (totals.protein < profile.proteinGoal) missing.push('protein');
+  if (day.steps < profile.stepGoal) missing.push('steps');
+  if (!day.sleep) missing.push('sleep');
+  if (!day.workoutDone && workout.type !== 'Rest') {
+    return 'Next best action: do ' + workout.title + '. If time is tight, do the first 3 exercises and mark it done.';
   }
-  if (totals.protein < profile.proteinGoal * 0.5) {
-    return 'Protein is the biggest gap right now. Add a meal or shake when you can.';
+  if (workout.type === 'Rest') {
+    return 'Sabbath/rest day. Next best action: protect recovery, log basics, and do not turn rest into guilt.';
   }
-  if (day.water < profile.waterGoal * 0.6) {
-    return 'Hydration is behind. A quick water log would help the day look better.';
+  if (weekly.score < 55) {
+    return 'Next best action: rebuild the week with basics first. Hit water, protein, sleep, and today\'s plan before adding anything fancy.';
   }
-  if (day.steps < profile.stepGoal * 0.6) {
-    return 'Movement is the next easy win. A short walk can move this up fast.';
+  if (missing.includes('protein')) {
+    return 'Next best action: get protein in. That supports the chest/arms goal more than random extra sets.';
+  }
+  if (missing.includes('water')) {
+    return 'Next best action: drink water and tap +1 water. Easy win.';
+  }
+  if (missing.includes('steps')) {
+    return 'Next best action: 10-15 minute walk. Keep it easy so lifting still recovers.';
   }
   if (day.sleep && day.sleep < profile.sleepGoal - 1) {
-    return 'Sleep was low, so keep the workout reasonable and recover well tonight.';
+    return 'Next best action: recover harder tonight. Low sleep means keep effort clean, not reckless.';
   }
-  return 'Looking balanced. Keep logging normally and do not overthink it.';
+  return 'Next best action: stay consistent. The plan is balanced today, so log the night checklist and keep momentum.';
 }
 
 function calculateReadiness(day, profile) {
@@ -1414,6 +1683,72 @@ function calculateReadiness(day, profile) {
   if (day.restingHr && day.restingHr > 85) score -= 10;
   if (day.workoutDone) score += 5;
   return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function calculateWeeklyFitnessScore(dateKey, profile) {
+  const weekDates = getTrailingDateKeys(dateKey, 7);
+  const days = weekDates.map((key) => normalizeFitnessDay(fitnessState.days[key] || { date: key }, key));
+  const workoutDays = days.filter((day) => ['Lift', 'Hybrid'].includes(getWorkoutForDate(day.date).type));
+  const workoutScore = Math.min(35, (workoutDays.filter((day) => day.workoutDone).length / Math.max(1, profile.workoutGoal)) * 35);
+  const proteinScore = averageGoalScore(days, (day) => getFoodTotals(day).protein, profile.proteinGoal, 12);
+  const calorieScore = averageCalorieScore(days, profile.calorieGoal, 8);
+  const waterScore = averageGoalScore(days, (day) => day.water, profile.waterGoal, 10);
+  const stepScore = averageGoalScore(days, (day) => day.steps, profile.stepGoal, 12);
+  const sleepScore = averageGoalScore(days, (day) => day.sleep, profile.sleepGoal, 13);
+  const checklistScore = calculateChecklistScore(days, 10);
+  const score = Math.round(workoutScore + proteinScore + calorieScore + waterScore + stepScore + sleepScore + checklistScore);
+  return { score: Math.max(0, Math.min(100, score)), label: getFitnessScoreLabel(score) };
+}
+
+function averageGoalScore(days, getter, goal, maxPoints) {
+  const ratios = days.map((day) => {
+    const value = Number(getter(day) || 0);
+    return Math.min(1, value / Math.max(1, goal));
+  });
+  return (ratios.reduce((sum, ratio) => sum + ratio, 0) / Math.max(1, ratios.length)) * maxPoints;
+}
+
+function averageCalorieScore(days, calorieGoal, maxPoints) {
+  const ratios = days.map((day) => {
+    const calories = getFoodTotals(day).calories;
+    if (!calories) {
+      return 0;
+    }
+    const distance = Math.abs(calories - calorieGoal) / Math.max(1, calorieGoal);
+    return Math.max(0, 1 - Math.min(1, distance * 2));
+  });
+  return (ratios.reduce((sum, ratio) => sum + ratio, 0) / Math.max(1, ratios.length)) * maxPoints;
+}
+
+function calculateChecklistScore(days, maxPoints) {
+  const totalItems = FITNESS_CHECKLISTS.morning.length + FITNESS_CHECKLISTS.night.length;
+  const ratios = days.map((day) => {
+    const done = FITNESS_CHECKLISTS.morning.filter(([key]) => day.checklists.morning[key]).length + FITNESS_CHECKLISTS.night.filter(([key]) => day.checklists.night[key]).length;
+    return done / totalItems;
+  });
+  return (ratios.reduce((sum, ratio) => sum + ratio, 0) / Math.max(1, ratios.length)) * maxPoints;
+}
+
+function getFitnessScoreLabel(score) {
+  if (score >= 85) return 'Locked in';
+  if (score >= 70) return 'Solid';
+  if (score >= 55) return 'Needs recovery';
+  return 'Needs attention';
+}
+
+function getWorkoutForDate(dateKey) {
+  const date = new Date((dateKey || todayValue()) + 'T00:00:00');
+  const day = date.getDay();
+  return FITNESS_WEEKLY_PLAN.find((workout) => workout.day === day) || FITNESS_WEEKLY_PLAN[1];
+}
+
+function getTrailingDateKeys(dateKey, count) {
+  const base = new Date((dateKey || todayValue()) + 'T00:00:00');
+  return Array.from({ length: count }, (_, index) => {
+    const cursor = new Date(base);
+    cursor.setDate(base.getDate() - (count - 1 - index));
+    return new Date(cursor.getTime() - cursor.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  });
 }
 
 function calculateWorkoutStreak() {
