@@ -139,17 +139,17 @@ const FITNESS_WEEKLY_PLAN = [
 
 const FITNESS_CHECKLISTS = {
   morning: [
-    ['weighIn', 'Weigh in'],
-    ['waterStart', 'Drink water'],
-    ['reviewWorkout', 'Check workout'],
-    ['checkCalendar', 'Check school/calendar']
+    ['weighIn', 'Type today\'s weight in the Weight box.'],
+    ['waterStart', 'Drink 2 cups of water after you wake up.'],
+    ['reviewWorkout', 'Read today\'s workout card before school.'],
+    ['checkCalendar', 'Open the school calendar and look at today.']
   ],
   night: [
-    ['finalWater', 'Final water check'],
-    ['finalSteps', 'Final Apple Watch steps'],
-    ['proteinCheck', 'Protein check'],
-    ['watchStats', 'Apple Watch HR/sleep notes'],
-    ['sleepPlan', 'Set sleep plan']
+    ['finishWater', 'Look at Water. If it is under 12 cups, drink 1 more cup.'],
+    ['typeSteps', 'Type your final step number in the Steps box.'],
+    ['finishProtein', 'Look at Protein. If it is under 150g, eat an easy protein food.'],
+    ['logSleep', 'Type how many hours you slept or plan to sleep.'],
+    ['saveDay', 'Press Save daily log.']
   ]
 };
 
@@ -1643,34 +1643,37 @@ function getFoodTotals(day) {
 }
 
 function getFitnessFocus(day, profile, totals, weekly, workout) {
-  const missing = [];
-  if (!day.weight) missing.push('weigh in');
-  if (day.water < profile.waterGoal) missing.push('water');
-  if (totals.protein < profile.proteinGoal) missing.push('protein');
-  if (day.steps < profile.stepGoal) missing.push('steps');
-  if (!day.sleep) missing.push('sleep');
-  if (!day.workoutDone && workout.type !== 'Rest') {
-    return 'Next best action: do ' + workout.title + '. If time is tight, do the first 3 exercises and mark it done.';
+  const waterLeft = Math.max(0, profile.waterGoal - day.water);
+  const proteinLeft = Math.max(0, profile.proteinGoal - totals.protein);
+  const stepsLeft = Math.max(0, profile.stepGoal - day.steps);
+  if (!day.weight) {
+    return 'Do this first: type your weight in the Weight box, then press Save daily log.';
   }
   if (workout.type === 'Rest') {
-    return 'Sabbath/rest day. Next best action: protect recovery, log basics, and do not turn rest into guilt.';
+    return 'Today is Sabbath/rest. Do this: log water, steps, protein, and sleep. No lifting needed.';
+  }
+  if (!day.workoutDone) {
+    return 'Do this next: start ' + workout.title + '. If you are busy, do the first 3 exercises, then tap Mark workout done.';
+  }
+  if (waterLeft > 0) {
+    return 'Do this next: drink 1 cup of water. You have ' + waterLeft + ' cup' + (waterLeft === 1 ? '' : 's') + ' left to reach 12.';
+  }
+  if (proteinLeft > 0) {
+    return 'Do this next: eat protein. You need about ' + proteinLeft + 'g more to reach 150g today.';
+  }
+  if (stepsLeft > 0) {
+    return 'Do this next: walk for 10 minutes. You have about ' + stepsLeft.toLocaleString() + ' steps left to reach 10,000.';
+  }
+  if (!day.sleep) {
+    return 'Do this tonight: type your sleep goal as 9 hours, then press Save daily log.';
+  }
+  if (day.sleep < profile.sleepGoal - 1) {
+    return 'Do this tonight: get to bed earlier. Sleep is low, so recovery matters more than extra sets.';
   }
   if (weekly.score < 55) {
-    return 'Next best action: rebuild the week with basics first. Hit water, protein, sleep, and today\'s plan before adding anything fancy.';
+    return 'Do this next: keep it simple. Save today\'s log, finish water, and follow tomorrow\'s workout card.';
   }
-  if (missing.includes('protein')) {
-    return 'Next best action: get protein in. That supports the chest/arms goal more than random extra sets.';
-  }
-  if (missing.includes('water')) {
-    return 'Next best action: drink water and tap +1 water. Easy win.';
-  }
-  if (missing.includes('steps')) {
-    return 'Next best action: 10-15 minute walk. Keep it easy so lifting still recovers.';
-  }
-  if (day.sleep && day.sleep < profile.sleepGoal - 1) {
-    return 'Next best action: recover harder tonight. Low sleep means keep effort clean, not reckless.';
-  }
-  return 'Next best action: stay consistent. The plan is balanced today, so log the night checklist and keep momentum.';
+  return 'You are on track. Do this last: open Night checklist, finish each line, then press Save daily log.';
 }
 
 function calculateReadiness(day, profile) {
