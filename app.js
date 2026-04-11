@@ -12,18 +12,20 @@ const DISMISSED_ASSIGNMENTS_KEY = 'manage-my-life-dismissed-assignments';
 const FITNESS_PROFILE_KEY = 'manage-my-life-fitness-profile';
 const FITNESS_DAYS_KEY = 'manage-my-life-fitness-days';
 const FITNESS_FIXED_PROFILE = {
-  height: '',
-  age: 0,
+  height: "6'1",
+  displayHeight: "6'3 with 2-inch sole shoes",
+  startingWeight: 200.2,
+  age: 17,
   sex: 'male',
   goal: 'maintain',
   activityLevel: 'moderate',
-  proteinGoal: 0,
-  calorieGoal: 0,
-  waterGoal: 8,
+  proteinGoal: 150,
+  calorieGoal: 2850,
+  waterGoal: 12,
   stepGoal: 10000,
-  sleepGoal: 8,
+  sleepGoal: 9,
   workoutGoal: 4,
-  restrictions: ''
+  restrictions: "Measured 6'3 with 2-inch sole shoes, so goal estimates use about 6'1 actual height."
 };
 
 const hourButtons = Array.from(document.querySelectorAll('.hour-chip'));
@@ -1409,10 +1411,20 @@ function loadFitnessProfile() {
 function normalizeFitnessProfile(profile) {
   return {
     ...profile,
+    height: profile.height || FITNESS_FIXED_PROFILE.height,
+    displayHeight: profile.displayHeight || FITNESS_FIXED_PROFILE.displayHeight,
+    startingWeight: Number(profile.startingWeight) || FITNESS_FIXED_PROFILE.startingWeight,
+    age: Number(profile.age) || FITNESS_FIXED_PROFILE.age,
+    sex: profile.sex || FITNESS_FIXED_PROFILE.sex,
+    goal: profile.goal || FITNESS_FIXED_PROFILE.goal,
+    activityLevel: profile.activityLevel || FITNESS_FIXED_PROFILE.activityLevel,
+    proteinGoal: Number(profile.proteinGoal) || FITNESS_FIXED_PROFILE.proteinGoal,
+    calorieGoal: Number(profile.calorieGoal) || FITNESS_FIXED_PROFILE.calorieGoal,
     waterGoal: Number(profile.waterGoal) || FITNESS_FIXED_PROFILE.waterGoal,
     stepGoal: Number(profile.stepGoal) || FITNESS_FIXED_PROFILE.stepGoal,
     sleepGoal: Number(profile.sleepGoal) || FITNESS_FIXED_PROFILE.sleepGoal,
-    workoutGoal: Number(profile.workoutGoal) || FITNESS_FIXED_PROFILE.workoutGoal
+    workoutGoal: Number(profile.workoutGoal) || FITNESS_FIXED_PROFILE.workoutGoal,
+    restrictions: profile.restrictions || FITNESS_FIXED_PROFILE.restrictions
   };
 }
 
