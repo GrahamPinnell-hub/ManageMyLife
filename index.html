@@ -51,6 +51,11 @@
             <strong>School assignments</strong>
             <span class="tile-copy">Sync Canvas, then sort your work by urgency and class.</span>
           </button>
+          <button class="dashboard-tile active" type="button" data-target="launchpadSection">
+            <span class="tile-kicker">Live now</span>
+            <strong>School launchpad</strong>
+            <span class="tile-copy">One-tap links for Canvas, Edgenuity, PowerSchool, and SchoolLinks.</span>
+          </button>
           <button class="dashboard-tile active" type="button" data-target="calendarSection">
             <span class="tile-kicker">Live now</span>
             <strong>Calendar</strong>
@@ -61,10 +66,10 @@
             <strong>Chores</strong>
             <span class="tile-copy">House jobs, repeats, and what needs done today.</span>
           </button>
-          <button class="dashboard-tile" type="button" data-target="gymSection">
-            <span class="tile-kicker">Tomorrow</span>
-            <strong>Gym</strong>
-            <span class="tile-copy">Workout plan, check-ins, and streaks.</span>
+          <button class="dashboard-tile active" type="button" data-target="fitnessSection">
+            <span class="tile-kicker">Live now</span>
+            <strong>Fitness tracker</strong>
+            <span class="tile-copy">Food, protein, steps, heart rate, sleep, workouts, and readiness.</span>
           </button>
           <button class="dashboard-tile" type="button" data-target="prayerSection">
             <span class="tile-kicker">Tomorrow</span>
@@ -196,7 +201,45 @@
         <div class="entries" id="entries"></div>
       </section>
 
-      <section class="card" id="schoolSection">
+            <section class="card" id="launchpadSection">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Live now</p>
+            <h2>School launchpad</h2>
+            <p class="mini">Quick links to the school apps you actually use most.</p>
+          </div>
+        </div>
+
+        <div class="dashboard-grid launchpad-grid">
+          <a class="dashboard-tile active launchpad-link" href="https://jenks.instructure.com" target="_blank" rel="noopener noreferrer">
+            <span class="tile-kicker">Classes</span>
+            <strong>Canvas</strong>
+            <span class="tile-copy">Assignments, due dates, and class work.</span>
+          </a>
+          <a class="dashboard-tile active launchpad-link" href="https://student.edgenuity.com" target="_blank" rel="noopener noreferrer">
+            <span class="tile-kicker">Progress</span>
+            <strong>Edgenuity</strong>
+            <span class="tile-copy">Course map, due work, and progress.</span>
+          </a>
+          <a class="dashboard-tile launchpad-link" href="#" id="powerSchoolLaunchLink">
+            <span class="tile-kicker">Grades</span>
+            <strong>PowerSchool</strong>
+            <span class="tile-copy">Use your exact PowerSchool Student link here later.</span>
+          </a>
+          <a class="dashboard-tile launchpad-link" href="#" id="schoolLinksLaunchLink">
+            <span class="tile-kicker">Planning</span>
+            <strong>SchoolLinks</strong>
+            <span class="tile-copy">College and career tasks from school.</span>
+          </a>
+          <a class="dashboard-tile launchpad-link" href="https://calendar.google.com/calendar/u/0/r" target="_blank" rel="noopener noreferrer">
+            <span class="tile-kicker">Schedule</span>
+            <strong>Google Calendar</strong>
+            <span class="tile-copy">Open your full calendar view.</span>
+          </a>
+        </div>
+      </section>
+
+<section class="card" id="schoolSection">
         <div class="section-head">
           <div>
             <p class="eyebrow">Live now</p>
@@ -438,10 +481,203 @@
         <p class="mini">We can add repeat chores, quick check-off buttons, and who owns what.</p>
       </section>
 
-      <section class="card placeholder-card" id="gymSection">
-        <p class="eyebrow">Tomorrow</p>
-        <h2>Gym</h2>
-        <p class="mini">We can add workouts, lift tracking, and weekly consistency checks here.</p>
+      <section class="card" id="fitnessSection">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Live now</p>
+            <h2>Fitness tracker</h2>
+            <p class="mini">A private daily tracker for food, protein, water, steps, sleep, heart rate, workouts, mood, and trends.</p>
+          </div>
+        </div>
+
+        <div id="fitnessStatusBox" class="status"></div>
+
+        <div class="fitness-tabs section-gap">
+          <button class="chip fitness-tab active" type="button" data-fitness-tab="today">Today</button>
+          <button class="chip fitness-tab" type="button" data-fitness-tab="profile">Profile</button>
+          <button class="chip fitness-tab" type="button" data-fitness-tab="history">History</button>
+        </div>
+
+        <div class="fitness-panel" id="fitnessTodayPanel">
+          <div class="school-summary-grid">
+            <div class="overview-item readiness-card">
+              <strong id="fitnessReadinessScore">--</strong>
+              <span>Readiness score</span>
+            </div>
+            <div class="overview-item">
+              <strong id="fitnessProteinProgress">0 / 0g</strong>
+              <span>Protein today</span>
+            </div>
+            <div class="overview-item">
+              <strong id="fitnessCaloriesProgress">0 / 0</strong>
+              <span>Calories today</span>
+            </div>
+            <div class="overview-item">
+              <strong id="fitnessStepsProgress">0 steps</strong>
+              <span>Movement today</span>
+            </div>
+          </div>
+
+          <div class="control-box section-gap">
+            <h3>Daily check-in</h3>
+            <label class="field">Date
+              <input id="fitnessDate" type="date">
+            </label>
+            <div class="school-summary-grid two-up">
+              <label class="field">Weight (lb)
+                <input id="fitnessWeight" type="number" min="0" step="0.1" placeholder="Example: 160">
+              </label>
+              <label class="field">Water (cups)
+                <input id="fitnessWater" type="number" min="0" step="1" placeholder="8">
+              </label>
+              <label class="field">Steps
+                <input id="fitnessSteps" type="number" min="0" step="1" placeholder="10000">
+              </label>
+              <label class="field">Active minutes
+                <input id="fitnessActiveMinutes" type="number" min="0" step="1" placeholder="45">
+              </label>
+              <label class="field">Resting HR
+                <input id="fitnessRestingHr" type="number" min="0" step="1" placeholder="60">
+              </label>
+              <label class="field">Avg HR
+                <input id="fitnessAvgHr" type="number" min="0" step="1" placeholder="80">
+              </label>
+              <label class="field">Sleep (hours)
+                <input id="fitnessSleep" type="number" min="0" step="0.25" placeholder="8">
+              </label>
+              <label class="field">Mood / energy (1-10)
+                <input id="fitnessMood" type="number" min="1" max="10" step="1" placeholder="7">
+              </label>
+            </div>
+            <label class="field">Soreness / notes
+              <textarea id="fitnessNotes" placeholder="Anything that matters today"></textarea>
+            </label>
+            <label class="toggle-row">
+              <input id="fitnessWorkoutDone" type="checkbox">
+              <span>Workout completed today</span>
+            </label>
+            <div class="button-stack">
+              <button class="btn primary" id="saveFitnessDayBtn" type="button">Save daily check-in</button>
+            </div>
+          </div>
+
+          <div class="control-box section-gap">
+            <h3>Food log</h3>
+            <div class="school-summary-grid two-up">
+              <label class="field">Meal / food
+                <input id="foodName" type="text" placeholder="Chicken bowl">
+              </label>
+              <label class="field">Meal time
+                <select id="foodMeal">
+                  <option>Breakfast</option>
+                  <option>Lunch</option>
+                  <option>Dinner</option>
+                  <option>Snack</option>
+                </select>
+              </label>
+              <label class="field">Calories
+                <input id="foodCalories" type="number" min="0" step="1" placeholder="500">
+              </label>
+              <label class="field">Protein (g)
+                <input id="foodProtein" type="number" min="0" step="1" placeholder="30">
+              </label>
+            </div>
+            <div class="chip-grid fitness-food-presets">
+              <button class="chip food-preset" type="button" data-food-name="Protein shake" data-calories="200" data-protein="30">Protein shake</button>
+              <button class="chip food-preset" type="button" data-food-name="Eggs" data-calories="210" data-protein="18">Eggs</button>
+              <button class="chip food-preset" type="button" data-food-name="Chicken" data-calories="250" data-protein="45">Chicken</button>
+              <button class="chip food-preset" type="button" data-food-name="School lunch" data-calories="650" data-protein="25">School lunch</button>
+            </div>
+            <div class="button-stack">
+              <button class="btn primary" id="addFoodBtn" type="button">Add food</button>
+            </div>
+            <div class="entries" id="fitnessFoodList"></div>
+          </div>
+        </div>
+
+        <div class="fitness-panel hidden" id="fitnessProfilePanel">
+          <div class="control-box section-gap">
+            <h3>Body goals and targets</h3>
+            <div class="school-summary-grid two-up">
+              <label class="field">Height
+                <input id="fitnessHeight" type="text" placeholder="5'10 or 70 in">
+              </label>
+              <label class="field">Age
+                <input id="fitnessAge" type="number" min="0" step="1" placeholder="17">
+              </label>
+              <label class="field">Sex for calorie estimate
+                <select id="fitnessSex">
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
+              </label>
+              <label class="field">Goal
+                <select id="fitnessGoal">
+                  <option value="maintain">Maintain</option>
+                  <option value="gain-muscle">Gain muscle</option>
+                  <option value="lose-fat">Lose fat</option>
+                  <option value="performance">Improve performance</option>
+                </select>
+              </label>
+              <label class="field">Activity level
+                <select id="fitnessActivityLevel">
+                  <option value="light">Light</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="high">High</option>
+                  <option value="athlete">Athlete</option>
+                </select>
+              </label>
+              <label class="field">Protein goal (g)
+                <input id="fitnessProteinGoal" type="number" min="0" step="1" placeholder="140">
+              </label>
+              <label class="field">Calorie goal
+                <input id="fitnessCalorieGoal" type="number" min="0" step="1" placeholder="2600">
+              </label>
+              <label class="field">Water goal (cups)
+                <input id="fitnessWaterGoal" type="number" min="0" step="1" placeholder="8">
+              </label>
+              <label class="field">Step goal
+                <input id="fitnessStepGoal" type="number" min="0" step="1" placeholder="10000">
+              </label>
+              <label class="field">Sleep goal (hours)
+                <input id="fitnessSleepGoal" type="number" min="0" step="0.25" placeholder="8">
+              </label>
+              <label class="field">Workout goal / week
+                <input id="fitnessWorkoutGoal" type="number" min="0" step="1" placeholder="4">
+              </label>
+            </div>
+            <label class="field">Restrictions / injuries / notes
+              <textarea id="fitnessRestrictions" placeholder="Anything to remember before planning workouts"></textarea>
+            </label>
+            <div class="button-stack">
+              <button class="btn secondary" id="suggestFitnessGoalsBtn" type="button">Suggest my goals</button>
+              <button class="btn primary" id="saveFitnessProfileBtn" type="button">Save fitness profile</button>
+            </div>
+            <p class="notice">This is a personal organizer, not medical advice. For major diet, weight, or training changes, loop in a parent/guardian, doctor, coach, or trainer.</p>
+          </div>
+        </div>
+
+        <div class="fitness-panel hidden" id="fitnessHistoryPanel">
+          <div class="school-summary-grid section-gap">
+            <div class="overview-item">
+              <strong id="fitnessWeightTrend">--</strong>
+              <span>7-day average weight</span>
+            </div>
+            <div class="overview-item">
+              <strong id="fitnessWorkoutStreak">0 days</strong>
+              <span>Workout streak</span>
+            </div>
+            <div class="overview-item">
+              <strong id="fitnessAvgSteps">0 steps</strong>
+              <span>7-day average steps</span>
+            </div>
+            <div class="overview-item">
+              <strong id="fitnessAvgSleep">0 hrs</strong>
+              <span>7-day average sleep</span>
+            </div>
+          </div>
+          <div class="entries section-gap" id="fitnessHistoryList"></div>
+        </div>
       </section>
 
       <section class="card placeholder-card" id="prayerSection">

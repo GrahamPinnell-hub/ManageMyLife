@@ -9,10 +9,14 @@ const EDGENUITY_DEFAULT_API_BASE = 'https://r07.core.learn.edgenuity.com';
 const GOOGLE_CALENDAR_EVENTS_KEY = 'manage-my-life-google-calendar-events';
 const GOOGLE_CALENDAR_NAME_KEY = 'manage-my-life-google-calendar-name';
 const DISMISSED_ASSIGNMENTS_KEY = 'manage-my-life-dismissed-assignments';
+const FITNESS_PROFILE_KEY = 'manage-my-life-fitness-profile';
+const FITNESS_DAYS_KEY = 'manage-my-life-fitness-days';
 
 const hourButtons = Array.from(document.querySelectorAll('.hour-chip'));
 const activityButtons = Array.from(document.querySelectorAll('.activity-chip'));
 const dashboardTiles = Array.from(document.querySelectorAll('.dashboard-tile'));
+const fitnessTabs = Array.from(document.querySelectorAll('.fitness-tab'));
+const foodPresetButtons = Array.from(document.querySelectorAll('.food-preset'));
 
 const els = {
   appCard: document.getElementById('appCard'),
@@ -77,7 +81,52 @@ const els = {
   calendarToday: document.getElementById('calendarToday'),
   calendarWeek: document.getElementById('calendarWeek'),
   schoolSection: document.getElementById('schoolSection'),
-  calendarSection: document.getElementById('calendarSection')
+  calendarSection: document.getElementById('calendarSection'),
+  fitnessStatusBox: document.getElementById('fitnessStatusBox'),
+  fitnessDate: document.getElementById('fitnessDate'),
+  fitnessWeight: document.getElementById('fitnessWeight'),
+  fitnessWater: document.getElementById('fitnessWater'),
+  fitnessSteps: document.getElementById('fitnessSteps'),
+  fitnessActiveMinutes: document.getElementById('fitnessActiveMinutes'),
+  fitnessRestingHr: document.getElementById('fitnessRestingHr'),
+  fitnessAvgHr: document.getElementById('fitnessAvgHr'),
+  fitnessSleep: document.getElementById('fitnessSleep'),
+  fitnessMood: document.getElementById('fitnessMood'),
+  fitnessNotes: document.getElementById('fitnessNotes'),
+  fitnessWorkoutDone: document.getElementById('fitnessWorkoutDone'),
+  saveFitnessDayBtn: document.getElementById('saveFitnessDayBtn'),
+  foodName: document.getElementById('foodName'),
+  foodMeal: document.getElementById('foodMeal'),
+  foodCalories: document.getElementById('foodCalories'),
+  foodProtein: document.getElementById('foodProtein'),
+  addFoodBtn: document.getElementById('addFoodBtn'),
+  fitnessFoodList: document.getElementById('fitnessFoodList'),
+  fitnessHeight: document.getElementById('fitnessHeight'),
+  fitnessAge: document.getElementById('fitnessAge'),
+  fitnessSex: document.getElementById('fitnessSex'),
+  fitnessGoal: document.getElementById('fitnessGoal'),
+  fitnessActivityLevel: document.getElementById('fitnessActivityLevel'),
+  fitnessProteinGoal: document.getElementById('fitnessProteinGoal'),
+  fitnessCalorieGoal: document.getElementById('fitnessCalorieGoal'),
+  fitnessWaterGoal: document.getElementById('fitnessWaterGoal'),
+  fitnessStepGoal: document.getElementById('fitnessStepGoal'),
+  fitnessSleepGoal: document.getElementById('fitnessSleepGoal'),
+  fitnessWorkoutGoal: document.getElementById('fitnessWorkoutGoal'),
+  fitnessRestrictions: document.getElementById('fitnessRestrictions'),
+  saveFitnessProfileBtn: document.getElementById('saveFitnessProfileBtn'),
+  suggestFitnessGoalsBtn: document.getElementById('suggestFitnessGoalsBtn'),
+  fitnessReadinessScore: document.getElementById('fitnessReadinessScore'),
+  fitnessProteinProgress: document.getElementById('fitnessProteinProgress'),
+  fitnessCaloriesProgress: document.getElementById('fitnessCaloriesProgress'),
+  fitnessStepsProgress: document.getElementById('fitnessStepsProgress'),
+  fitnessWeightTrend: document.getElementById('fitnessWeightTrend'),
+  fitnessWorkoutStreak: document.getElementById('fitnessWorkoutStreak'),
+  fitnessAvgSteps: document.getElementById('fitnessAvgSteps'),
+  fitnessAvgSleep: document.getElementById('fitnessAvgSleep'),
+  fitnessHistoryList: document.getElementById('fitnessHistoryList'),
+  fitnessTodayPanel: document.getElementById('fitnessTodayPanel'),
+  fitnessProfilePanel: document.getElementById('fitnessProfilePanel'),
+  fitnessHistoryPanel: document.getElementById('fitnessHistoryPanel')
 };
 
 const canvasState = {
@@ -97,6 +146,10 @@ const googleCalendarState = {
 };
 
 const dismissedAssignments = loadDismissedAssignments();
+const fitnessState = {
+  profile: loadFitnessProfile(),
+  days: loadFitnessDays()
+};
 
 function init() {
   wireButtons();
@@ -105,6 +158,7 @@ function init() {
   renderCanvasAssignments();
   renderEdgenuityAssignments();
   renderCalendarView();
+  initFitness();
   els.date.value = todayValue();
   setHours(1);
   setActivity('Sunday school service');
@@ -145,7 +199,14 @@ function wireButtons() {
   els.syncEdgenuityBtn.addEventListener('click', syncEdgenuityAssignments);
   els.rebuildCalendarBtn.addEventListener('click', () => { renderCalendarView(); showCalendarStatus('School calendar refreshed.'); });
   els.syncGoogleCalendarBtn.addEventListener('click', syncGoogleCalendarEvents);
+  els.saveFitnessDayBtn.addEventListener('click', saveFitnessDay);
+  els.saveFitnessProfileBtn.addEventListener('click', saveFitnessProfile);
+  els.suggestFitnessGoalsBtn.addEventListener('click', suggestFitnessGoals);
+  els.addFoodBtn.addEventListener('click', addFitnessFood);
+  fitnessTabs.forEach((button) => button.addEventListener('click', () => showFitnessTab(button.getAttribute('data-fitness-tab'))));
+  foodPresetButtons.forEach((button) => button.addEventListener('click', () => applyFoodPreset(button)));
 }
+
 
 function fetchState() {
   setLoading(true);
@@ -934,6 +995,410 @@ function setActivity(value) {
   activityButtons.forEach((button) => {
     button.classList.toggle('active', button.getAttribute('data-activity') === value);
   });
+}
+
+
+function initFitness() {
+  if (!els.fitnessDate) {
+    return;
+  }
+  els.fitnessDate.value = todayValue();
+  fillFitnessProfile();
+  fillFitnessDay(todayValue());
+  els.fitnessDate.addEventListener('change', () => fillFitnessDay(els.fitnessDate.value));
+  renderFitness();
+}
+
+function showFitnessTab(tabName) {
+  fitnessTabs.forEach((button) => {
+    button.classList.toggle('active', button.getAttribute('data-fitness-tab') === tabName);
+  });
+  els.fitnessTodayPanel.classList.toggle('hidden', tabName !== 'today');
+  els.fitnessProfilePanel.classList.toggle('hidden', tabName !== 'profile');
+  els.fitnessHistoryPanel.classList.toggle('hidden', tabName !== 'history');
+}
+
+function fillFitnessProfile() {
+  const profile = fitnessState.profile;
+  els.fitnessHeight.value = profile.height || '';
+  els.fitnessAge.value = profile.age || '';
+  els.fitnessSex.value = profile.sex || 'male';
+  els.fitnessGoal.value = profile.goal || 'maintain';
+  els.fitnessActivityLevel.value = profile.activityLevel || 'moderate';
+  els.fitnessProteinGoal.value = profile.proteinGoal || '';
+  els.fitnessCalorieGoal.value = profile.calorieGoal || '';
+  els.fitnessWaterGoal.value = profile.waterGoal || '';
+  els.fitnessStepGoal.value = profile.stepGoal || '';
+  els.fitnessSleepGoal.value = profile.sleepGoal || '';
+  els.fitnessWorkoutGoal.value = profile.workoutGoal || '';
+  els.fitnessRestrictions.value = profile.restrictions || '';
+}
+
+function saveFitnessProfile() {
+  fitnessState.profile = {
+    height: els.fitnessHeight.value.trim(),
+    age: Number(els.fitnessAge.value || 0),
+    sex: els.fitnessSex.value,
+    goal: els.fitnessGoal.value,
+    activityLevel: els.fitnessActivityLevel.value,
+    proteinGoal: Number(els.fitnessProteinGoal.value || 0),
+    calorieGoal: Number(els.fitnessCalorieGoal.value || 0),
+    waterGoal: Number(els.fitnessWaterGoal.value || 0),
+    stepGoal: Number(els.fitnessStepGoal.value || 0),
+    sleepGoal: Number(els.fitnessSleepGoal.value || 0),
+    workoutGoal: Number(els.fitnessWorkoutGoal.value || 0),
+    restrictions: els.fitnessRestrictions.value.trim()
+  };
+  localStorage.setItem(FITNESS_PROFILE_KEY, JSON.stringify(fitnessState.profile));
+  renderFitness();
+  showFitnessStatus('Fitness profile saved.');
+}
+
+
+function suggestFitnessGoals() {
+  const currentDate = els.fitnessDate.value || todayValue();
+  const currentDay = readFitnessDayForm();
+  fitnessState.days[currentDate] = currentDay;
+
+  const weightLb = currentDay.weight || getLatestFitnessValue('weight');
+  const age = Number(els.fitnessAge.value || 0);
+  const heightIn = parseHeightInches(els.fitnessHeight.value);
+  const sex = els.fitnessSex.value || 'male';
+
+  if (!weightLb || !heightIn || !age) {
+    showFitnessStatus('Add height, age, and today\'s weight first, then I can suggest goals.');
+    return;
+  }
+
+  const recentDays = getRecentFitnessDays(7);
+  const activityLevel = inferActivityLevel(recentDays, els.fitnessActivityLevel.value);
+  const weightKg = weightLb / 2.20462;
+  const heightCm = heightIn * 2.54;
+  const bmr = (10 * weightKg) + (6.25 * heightCm) - (5 * age) + (sex === 'female' ? -161 : 5);
+  const multiplier = getActivityMultiplier(activityLevel);
+  let calorieGoal = Math.round((bmr * multiplier) / 25) * 25;
+  const goal = els.fitnessGoal.value;
+
+  if (goal === 'lose-fat') {
+    calorieGoal -= 250;
+  } else if (goal === 'gain-muscle') {
+    calorieGoal += 250;
+  } else if (goal === 'performance') {
+    calorieGoal += 100;
+  }
+
+  const proteinPerLb = goal === 'gain-muscle' ? 0.85 : goal === 'lose-fat' ? 0.75 : goal === 'performance' ? 0.8 : 0.7;
+  const proteinGoal = Math.round(weightLb * proteinPerLb);
+  const activeMinutes = Number(currentDay.activeMinutes || averageRecentValue(recentDays, 'activeMinutes') || 0);
+  const waterBase = sex === 'female' ? 10 : 11;
+  const waterGoal = Math.round(waterBase + Math.max(0, activeMinutes / 30));
+  const stepGoal = activityLevel === 'athlete' ? 14000 : activityLevel === 'high' ? 12000 : activityLevel === 'moderate' ? 10000 : 8000;
+  const sleepGoal = age && age < 18 ? 9 : 8;
+  const workoutGoal = goal === 'maintain' ? 3 : 4;
+
+  els.fitnessActivityLevel.value = activityLevel;
+  els.fitnessProteinGoal.value = proteinGoal;
+  els.fitnessCalorieGoal.value = Math.max(1200, calorieGoal);
+  els.fitnessWaterGoal.value = waterGoal;
+  els.fitnessStepGoal.value = stepGoal;
+  els.fitnessSleepGoal.value = sleepGoal;
+  els.fitnessWorkoutGoal.value = workoutGoal;
+
+  saveFitnessProfile();
+  fitnessState.days[currentDate] = currentDay;
+  persistFitnessDays();
+  renderFitness();
+  showFitnessStatus('Starter goals suggested from your stats and recent logs.');
+}
+
+function parseHeightInches(value) {
+  const text = String(value || '').trim().toLowerCase();
+  if (!text) {
+    return 0;
+  }
+  const feetMatch = text.match(/^(\d+)\s*'?\s*(\d+)?/);
+  if (feetMatch && text.includes("'")) {
+    return (Number(feetMatch[1]) * 12) + Number(feetMatch[2] || 0);
+  }
+  if (text.includes('ft')) {
+    const feet = Number((text.match(/(\d+(?:\.\d+)?)\s*ft/) || [])[1] || 0);
+    const inches = Number((text.match(/(\d+(?:\.\d+)?)\s*in/) || [])[1] || 0);
+    return (feet * 12) + inches;
+  }
+  return Number(text.replace(/[^\d.]/g, '')) || 0;
+}
+
+function inferActivityLevel(days, fallback) {
+  const avgSteps = averageRecentValue(days, 'steps');
+  const avgActive = averageRecentValue(days, 'activeMinutes');
+  if (avgSteps >= 12000 || avgActive >= 75) return 'athlete';
+  if (avgSteps >= 9000 || avgActive >= 45) return 'high';
+  if (avgSteps >= 6000 || avgActive >= 25) return 'moderate';
+  return fallback || 'light';
+}
+
+function getActivityMultiplier(level) {
+  if (level === 'athlete') return 1.75;
+  if (level === 'high') return 1.6;
+  if (level === 'moderate') return 1.45;
+  return 1.3;
+}
+
+function getRecentFitnessDays(count) {
+  return Object.values(fitnessState.days)
+    .filter((day) => day && day.date)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, count);
+}
+
+function averageRecentValue(days, key) {
+  const values = days.map((day) => Number(day[key] || 0)).filter(Boolean);
+  if (!values.length) {
+    return 0;
+  }
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function getLatestFitnessValue(key) {
+  const latest = getRecentFitnessDays(30).find((day) => Number(day[key] || 0));
+  return latest ? Number(latest[key] || 0) : 0;
+}
+
+function getFitnessDay(dateKey) {
+  if (!fitnessState.days[dateKey]) {
+    fitnessState.days[dateKey] = {
+      date: dateKey,
+      weight: 0,
+      water: 0,
+      steps: 0,
+      activeMinutes: 0,
+      restingHr: 0,
+      avgHr: 0,
+      sleep: 0,
+      mood: 0,
+      notes: '',
+      workoutDone: false,
+      foods: []
+    };
+  }
+  return fitnessState.days[dateKey];
+}
+
+function fillFitnessDay(dateKey) {
+  const day = getFitnessDay(dateKey || todayValue());
+  els.fitnessDate.value = day.date;
+  els.fitnessWeight.value = day.weight || '';
+  els.fitnessWater.value = day.water || '';
+  els.fitnessSteps.value = day.steps || '';
+  els.fitnessActiveMinutes.value = day.activeMinutes || '';
+  els.fitnessRestingHr.value = day.restingHr || '';
+  els.fitnessAvgHr.value = day.avgHr || '';
+  els.fitnessSleep.value = day.sleep || '';
+  els.fitnessMood.value = day.mood || '';
+  els.fitnessNotes.value = day.notes || '';
+  els.fitnessWorkoutDone.checked = !!day.workoutDone;
+  renderFitness();
+}
+
+function readFitnessDayForm() {
+  const dateKey = els.fitnessDate.value || todayValue();
+  const day = getFitnessDay(dateKey);
+  return {
+    ...day,
+    date: dateKey,
+    weight: Number(els.fitnessWeight.value || 0),
+    water: Number(els.fitnessWater.value || 0),
+    steps: Number(els.fitnessSteps.value || 0),
+    activeMinutes: Number(els.fitnessActiveMinutes.value || 0),
+    restingHr: Number(els.fitnessRestingHr.value || 0),
+    avgHr: Number(els.fitnessAvgHr.value || 0),
+    sleep: Number(els.fitnessSleep.value || 0),
+    mood: Number(els.fitnessMood.value || 0),
+    notes: els.fitnessNotes.value.trim(),
+    workoutDone: !!els.fitnessWorkoutDone.checked,
+    foods: Array.isArray(day.foods) ? day.foods : []
+  };
+}
+
+function saveFitnessDay() {
+  const day = readFitnessDayForm();
+  fitnessState.days[day.date] = day;
+  persistFitnessDays();
+  renderFitness();
+  showFitnessStatus('Daily check-in saved.');
+}
+
+function addFitnessFood() {
+  const dateKey = els.fitnessDate.value || todayValue();
+  const day = readFitnessDayForm();
+  const food = {
+    id: Date.now().toString(),
+    name: els.foodName.value.trim() || 'Food item',
+    meal: els.foodMeal.value,
+    calories: Number(els.foodCalories.value || 0),
+    protein: Number(els.foodProtein.value || 0)
+  };
+  day.foods.push(food);
+  fitnessState.days[dateKey] = day;
+  persistFitnessDays();
+  els.foodName.value = '';
+  els.foodCalories.value = '';
+  els.foodProtein.value = '';
+  renderFitness();
+  showFitnessStatus('Food added.');
+}
+
+function deleteFitnessFood(dateKey, foodId) {
+  const day = getFitnessDay(dateKey);
+  day.foods = (day.foods || []).filter((food) => food.id !== foodId);
+  fitnessState.days[dateKey] = day;
+  persistFitnessDays();
+  renderFitness();
+  showFitnessStatus('Food removed.');
+}
+
+function applyFoodPreset(button) {
+  els.foodName.value = button.getAttribute('data-food-name') || '';
+  els.foodCalories.value = button.getAttribute('data-calories') || '';
+  els.foodProtein.value = button.getAttribute('data-protein') || '';
+}
+
+function renderFitness() {
+  if (!els.fitnessDate) {
+    return;
+  }
+  const dateKey = els.fitnessDate.value || todayValue();
+  const day = getFitnessDay(dateKey);
+  const totals = getFoodTotals(day);
+  const profile = fitnessState.profile;
+  els.fitnessProteinProgress.textContent = totals.protein + ' / ' + (profile.proteinGoal || 0) + 'g';
+  els.fitnessCaloriesProgress.textContent = totals.calories + ' / ' + (profile.calorieGoal || 0);
+  els.fitnessStepsProgress.textContent = (day.steps || 0).toLocaleString() + ' steps';
+  els.fitnessReadinessScore.textContent = calculateReadiness(day, profile) + '/100';
+  renderFitnessFoodList(day);
+  renderFitnessHistory();
+}
+
+function renderFitnessFoodList(day) {
+  els.fitnessFoodList.innerHTML = '';
+  const foods = Array.isArray(day.foods) ? day.foods : [];
+  if (!foods.length) {
+    els.fitnessFoodList.innerHTML = '<div class="entry"><div class="entry-top"><strong>No food logged yet</strong><span class="mini">Add meals above to track calories and protein.</span></div></div>';
+    return;
+  }
+  foods.forEach((food) => {
+    const card = document.createElement('div');
+    card.className = 'entry';
+    card.innerHTML = '<div class="entry-top"><strong>' + escapeHtml(food.name) + '</strong><span class="mini">' + escapeHtml(food.meal) + ' | ' + Number(food.calories || 0) + ' cal | ' + Number(food.protein || 0) + 'g protein</span></div>';
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn ghost dismiss-btn';
+    button.textContent = 'Remove';
+    button.addEventListener('click', () => deleteFitnessFood(day.date, food.id));
+    card.appendChild(button);
+    els.fitnessFoodList.appendChild(card);
+  });
+}
+
+function renderFitnessHistory() {
+  const days = Object.values(fitnessState.days).sort((a, b) => b.date.localeCompare(a.date));
+  const last7 = days.slice(0, 7);
+  els.fitnessWeightTrend.textContent = formatAverage(last7.map((day) => day.weight).filter(Boolean), ' lb');
+  els.fitnessAvgSteps.textContent = formatAverage(last7.map((day) => day.steps).filter(Boolean), ' steps', true);
+  els.fitnessAvgSleep.textContent = formatAverage(last7.map((day) => day.sleep).filter(Boolean), ' hrs');
+  els.fitnessWorkoutStreak.textContent = calculateWorkoutStreak() + ' days';
+  els.fitnessHistoryList.innerHTML = '';
+  if (!days.length) {
+    els.fitnessHistoryList.innerHTML = '<div class="entry"><div class="entry-top"><strong>No history yet</strong><span class="mini">Save your first daily check-in.</span></div></div>';
+    return;
+  }
+  days.slice(0, 10).forEach((day) => {
+    const totals = getFoodTotals(day);
+    const card = document.createElement('div');
+    card.className = 'entry';
+    card.innerHTML = '<div class="entry-top"><strong>' + escapeHtml(formatShortDate(day.date)) + '</strong><span class="mini">' + Number(day.weight || 0) + ' lb | ' + totals.calories + ' cal | ' + totals.protein + 'g protein | ' + Number(day.steps || 0).toLocaleString() + ' steps | ' + Number(day.sleep || 0) + 'h sleep</span></div>';
+    els.fitnessHistoryList.appendChild(card);
+  });
+}
+
+function getFoodTotals(day) {
+  return (day.foods || []).reduce((totals, food) => ({
+    calories: totals.calories + Number(food.calories || 0),
+    protein: totals.protein + Number(food.protein || 0)
+  }), { calories: 0, protein: 0 });
+}
+
+function calculateReadiness(day, profile) {
+  let score = 50;
+  const sleepGoal = Number(profile.sleepGoal || 8);
+  const stepGoal = Number(profile.stepGoal || 10000);
+  if (day.sleep) score += Math.min(20, (day.sleep / sleepGoal) * 20);
+  if (day.steps) score += Math.min(15, (day.steps / stepGoal) * 15);
+  if (day.mood) score += Math.min(15, (day.mood / 10) * 15);
+  if (day.restingHr && day.restingHr > 85) score -= 10;
+  if (day.workoutDone) score += 5;
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function calculateWorkoutStreak() {
+  let streak = 0;
+  const cursor = new Date();
+  while (true) {
+    const key = new Date(cursor.getTime() - cursor.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    if (!fitnessState.days[key] || !fitnessState.days[key].workoutDone) {
+      break;
+    }
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+function formatAverage(values, suffix, roundWhole) {
+  if (!values.length) {
+    return '--';
+  }
+  const avg = values.reduce((sum, value) => sum + Number(value || 0), 0) / values.length;
+  return (roundWhole ? Math.round(avg).toLocaleString() : avg.toFixed(1)) + suffix;
+}
+
+function persistFitnessDays() {
+  localStorage.setItem(FITNESS_DAYS_KEY, JSON.stringify(fitnessState.days));
+}
+
+function loadFitnessProfile() {
+  try {
+    return JSON.parse(localStorage.getItem(FITNESS_PROFILE_KEY) || 'null') || {
+      goal: 'maintain',
+      sex: 'male',
+      activityLevel: 'moderate',
+      proteinGoal: 0,
+      calorieGoal: 0,
+      waterGoal: 0,
+      stepGoal: 10000,
+      sleepGoal: 8,
+      workoutGoal: 4
+    };
+  } catch (error) {
+    return { goal: 'maintain', sex: 'male', activityLevel: 'moderate', proteinGoal: 0, calorieGoal: 0, waterGoal: 0, stepGoal: 10000, sleepGoal: 8, workoutGoal: 4 };
+  }
+}
+
+function loadFitnessDays() {
+  try {
+    return JSON.parse(localStorage.getItem(FITNESS_DAYS_KEY) || '{}');
+  } catch (error) {
+    return {};
+  }
+}
+
+function showFitnessStatus(message) {
+  els.fitnessStatusBox.textContent = message;
+  els.fitnessStatusBox.style.display = 'block';
+  window.setTimeout(() => {
+    els.fitnessStatusBox.style.display = 'none';
+    els.fitnessStatusBox.textContent = '';
+  }, 2500);
 }
 
 function todayValue() {
