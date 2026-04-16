@@ -12,7 +12,7 @@ const DISMISSED_ASSIGNMENTS_KEY = 'manage-my-life-dismissed-assignments';
 const TEST_NOTIFICATION_SETTINGS_KEY = 'manage-my-life-test-notification-settings';
 const TEST_NOTIFICATION_SENT_KEY = 'manage-my-life-test-notification-sent';
 const TEST_NOTIFICATION_LOOKAHEAD_DAYS = 7;
-const TEST_KEYWORD_PATTERN = /\b(test|quiz|exam|assessment|final|midterm|benchmark)\b/i;
+const TEST_KEYWORD_PATTERN = /\b(test|quiz|exam|assessment|final|midterm|benchmark|mcq|multiple\s*choice)\b/i;
 const FITNESS_PROFILE_KEY = 'manage-my-life-fitness-profile';
 const FITNESS_DAYS_KEY = 'manage-my-life-fitness-days';
 const FITNESS_FIXED_PROFILE = {
@@ -616,6 +616,8 @@ function renderCalendarView() {
     unitName: event.location || '',
     lessonName: '',
     itemType: event.allDay ? 'All day' : '',
+    description: event.description || '',
+    details: event.description || '',
     htmlUrl: event.htmlUrl || 'https://calendar.google.com/calendar/u/0/r',
     openLabel: event.openLabel || 'Open Google Calendar'
   }));
@@ -642,6 +644,8 @@ function collectCalendarItems() {
     unitName: assignment.unitName || '',
     lessonName: assignment.lessonName || '',
     itemType: assignment.pointsPossible != null ? String(assignment.pointsPossible) + ' pts' : '',
+    description: assignment.description || assignment.details || '',
+    details: assignment.details || assignment.description || '',
     htmlUrl: assignment.htmlUrl || '',
     openLabel: assignment.openLabel || 'Open in Canvas'
   }));
@@ -654,6 +658,8 @@ function collectCalendarItems() {
     unitName: assignment.unitName || '',
     lessonName: assignment.lessonName || '',
     itemType: assignment.itemType || '',
+    description: assignment.description || assignment.details || assignment.additionalInfo || '',
+    details: assignment.details || assignment.description || assignment.additionalInfo || '',
     htmlUrl: assignment.htmlUrl || '',
     openLabel: assignment.openLabel || 'Open in Edgenuity'
   }));
@@ -667,6 +673,8 @@ function collectCalendarItems() {
     unitName: event.location || '',
     lessonName: '',
     itemType: event.allDay ? 'All day' : '',
+    description: event.description || '',
+    details: event.description || '',
     htmlUrl: event.htmlUrl || '',
     openLabel: event.openLabel || 'Open Google Calendar'
   }));
@@ -894,10 +902,24 @@ function isTestLikeItem(item) {
     item.itemType,
     item.courseName,
     item.unitName,
-    item.lessonName
+    item.lessonName,
+    item.description,
+    item.details
   ].filter(Boolean).join(' ');
 
-  return TEST_KEYWORD_PATTERN.test(searchText);
+  if (TEST_KEYWORD_PATTERN.test(searchText)) {
+    return true;
+  }
+
+  const courseText = String(item.courseName || '').toLowerCase();
+  const titleText = String(item.name || item.title || '').trim();
+  const detailText = String((item.description || '') + ' ' + (item.details || '')).toLowerCase();
+
+  const isPhysicsCourse = courseText.includes('phys') || courseText.includes('physics');
+  const looksLikeTeacherTestCode = /^tm\s*\d{1,3}$/i.test(titleText);
+  const hasPhysicsTestDetails = /\bmcq\b|multiple\s*choice|units?\s*0?\d+|oscillations?|fluids?/.test(detailText);
+
+  return isPhysicsCourse && (looksLikeTeacherTestCode || hasPhysicsTestDetails);
 }
 
 function buildTestNotificationTitle(item) {
