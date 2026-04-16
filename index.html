@@ -255,16 +255,54 @@
           <div class="section-head compact-head">
             <div>
               <p class="eyebrow">Phone alerts</p>
-              <h3>Test notifications</h3>
-              <p class="mini">Tap once on your iPhone. I will watch synced Canvas, Edgenuity, and calendar items for tests, quizzes, exams, assessments, finals, midterms, and benchmarks.</p>
+              <h3>Test command center</h3>
+              <p class="mini">I watch Canvas, Edgenuity, and calendar items for tests. Weird teacher names like Physics TM08 can be caught with class rules too.</p>
             </div>
           </div>
+
           <div class="button-stack">
             <button class="btn secondary" id="enableTestNotificationsBtn" type="button">Turn on test alerts</button>
             <button class="btn ghost" id="sendTestNotificationBtn" type="button">Send test notification</button>
           </div>
+
+          <div class="test-tool-block">
+            <strong>Reminder timing</strong>
+            <p class="mini">Tap the reminders you want. Google Calendar uses these too.</p>
+            <div class="chip-grid reminder-grid" id="testReminderTiming"></div>
+          </div>
+
+          <div class="test-tool-block">
+            <strong>Upcoming tests</strong>
+            <p class="mini notification-status" id="upcomingTestsSummary">No upcoming tests found yet.</p>
+            <div class="entries compact-entries" id="upcomingTestsList"></div>
+          </div>
+
+          <div id="testStudyPlanPanel"></div>
+
+          <details class="test-rules-box">
+            <summary>Teacher/class rules</summary>
+            <p class="mini">Built-in rules are always on. Add a custom rule if a teacher names tests in a strange way.</p>
+            <div class="rule-list" id="testRulesList"></div>
+            <div class="rule-form">
+              <label class="field">Course contains
+                <input id="testRuleCourse" type="text" placeholder="Example: AP Phys">
+              </label>
+              <label class="field">Title contains
+                <input id="testRuleTitle" type="text" placeholder="Example: TM">
+              </label>
+              <label class="field">Details contain
+                <input id="testRuleDetails" type="text" placeholder="Example: MCQ">
+              </label>
+              <label class="field">Rule name
+                <input id="testRuleLabel" type="text" placeholder="Example: Physics test rule">
+              </label>
+              <button class="btn ghost" id="saveTestRuleBtn" type="button">Save teacher rule</button>
+              <button class="btn ghost dismiss-btn" id="clearTestRulesBtn" type="button">Clear custom rules</button>
+            </div>
+          </details>
+
           <p class="mini notification-status" id="testNotificationStatus">Tap Turn on test alerts to ask this phone for notification permission.</p>
-          <p class="notice">iPhone tip: if Safari will not ask, add ManageMyLife to your Home Screen and open it from the app icon first.</p>
+          <p class="notice">Most reliable option: tap Add Google reminders on a test. That creates a real Google Calendar event with reminder popups.</p>
         </div>
 
         <div class="stack section-gap">

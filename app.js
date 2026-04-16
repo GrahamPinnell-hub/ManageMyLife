@@ -11,8 +11,16 @@ const GOOGLE_CALENDAR_NAME_KEY = 'manage-my-life-google-calendar-name';
 const DISMISSED_ASSIGNMENTS_KEY = 'manage-my-life-dismissed-assignments';
 const TEST_NOTIFICATION_SETTINGS_KEY = 'manage-my-life-test-notification-settings';
 const TEST_NOTIFICATION_SENT_KEY = 'manage-my-life-test-notification-sent';
-const TEST_NOTIFICATION_LOOKAHEAD_DAYS = 7;
+const TEST_CLASS_RULES_KEY = 'manage-my-life-test-class-rules';
+const TEST_NOTIFICATION_LOOKAHEAD_DAYS = 14;
+const DEFAULT_TEST_REMINDER_MINUTES = [1440, 720, 180];
 const TEST_KEYWORD_PATTERN = /\b(test|quiz|exam|assessment|final|midterm|benchmark|mcq|multiple\s*choice)\b/i;
+const TEST_REMINDER_OPTIONS = [
+  { minutes: 2880, label: '2 days before' },
+  { minutes: 1440, label: '1 day before' },
+  { minutes: 720, label: 'Morning/day of' },
+  { minutes: 180, label: '3 hours before' }
+];
 const FITNESS_PROFILE_KEY = 'manage-my-life-fitness-profile';
 const FITNESS_DAYS_KEY = 'manage-my-life-fitness-days';
 const FITNESS_FIXED_PROFILE = {
@@ -196,6 +204,17 @@ const els = {
   enableTestNotificationsBtn: document.getElementById('enableTestNotificationsBtn'),
   sendTestNotificationBtn: document.getElementById('sendTestNotificationBtn'),
   testNotificationStatus: document.getElementById('testNotificationStatus'),
+  testReminderTiming: document.getElementById('testReminderTiming'),
+  upcomingTestsSummary: document.getElementById('upcomingTestsSummary'),
+  upcomingTestsList: document.getElementById('upcomingTestsList'),
+  testStudyPlanPanel: document.getElementById('testStudyPlanPanel'),
+  testRulesList: document.getElementById('testRulesList'),
+  testRuleCourse: document.getElementById('testRuleCourse'),
+  testRuleTitle: document.getElementById('testRuleTitle'),
+  testRuleDetails: document.getElementById('testRuleDetails'),
+  testRuleLabel: document.getElementById('testRuleLabel'),
+  saveTestRuleBtn: document.getElementById('saveTestRuleBtn'),
+  clearTestRulesBtn: document.getElementById('clearTestRulesBtn'),
   canvasAssignmentCount: document.getElementById('canvasAssignmentCount'),
   canvasClassCount: document.getElementById('canvasClassCount'),
   canvasOverdueCount: document.getElementById('canvasOverdueCount'),
@@ -311,7 +330,8 @@ const googleCalendarState = {
 const dismissedAssignments = loadDismissedAssignments();
 const testNotificationState = {
   settings: loadTestNotificationSettings(),
-  sent: loadTestNotificationSent()
+  sent: loadTestNotificationSent(),
+  customRules: loadCustomTestRules()
 };
 let testNotificationTimer = null;
 let serviceWorkerRegistrationPromise = null;
@@ -371,6 +391,8 @@ function wireButtons() {
   els.syncGoogleCalendarBtn.addEventListener('click', syncGoogleCalendarEvents);
   if (els.enableTestNotificationsBtn) els.enableTestNotificationsBtn.addEventListener('click', enableTestNotifications);
   if (els.sendTestNotificationBtn) els.sendTestNotificationBtn.addEventListener('click', sendManualTestNotification);
+  if (els.saveTestRuleBtn) els.saveTestRuleBtn.addEventListener('click', saveCustomTestRule);
+  if (els.clearTestRulesBtn) els.clearTestRulesBtn.addEventListener('click', clearCustomTestRules);
   if (els.saveFitnessDayBtn) els.saveFitnessDayBtn.addEventListener('click', saveFitnessDay);
   if (els.saveFitnessProfileBtn) els.saveFitnessProfileBtn.addEventListener('click', saveFitnessProfile);
   if (els.suggestFitnessGoalsBtn) els.suggestFitnessGoalsBtn.addEventListener('click', suggestFitnessGoals);
@@ -734,6 +756,9 @@ function buildCalendarHeadline(item) {
 
 
 function initTestNotifications() {
+  renderReminderTimingButtons();
+  renderTestRulesList();
+  renderUpcomingTestsPanel();
   refreshTestNotificationStatus();
 
   if (!supportsTestNotifications()) {
@@ -847,7 +872,7 @@ async function notifyUpcomingTests(force) {
     if (force) {
       await showTestNotification(
         'No upcoming tests found',
-        'I checked synced Canvas, Edgenuity, and calendar items for the next 7 days.',
+        'I checked synced Canvas, Edgenuity, and calendar items for the next 14 days.',
         { tag: 'manage-my-life-no-tests' }
       );
     }
@@ -855,15 +880,20 @@ async function notifyUpcomingTests(force) {
     return;
   }
 
-  const nextTest = upcomingTests[0];
-  const sentKey = getTestNotificationKey(nextTest);
+  const target = force ? { item: upcomingTests[0], reminder: null } : findTestReminderToSend(upcomingTests);
+  if (!target) {
+    refreshTestNotificationStatus();
+    return;
+  }
+
+  const sentKey = getTestNotificationKey(target.item) + '::' + (target.reminder ? target.reminder.minutes : 'manual');
   if (!force && testNotificationState.sent[sentKey]) {
     refreshTestNotificationStatus();
     return;
   }
 
-  const title = buildTestNotificationTitle(nextTest);
-  const body = buildTestNotificationBody(nextTest, upcomingTests.length);
+  const title = buildTestNotificationTitle(target.item);
+  const body = buildTestNotificationBody(target.item, upcomingTests.length, target.reminder);
   const shown = await showTestNotification(title, body, {
     tag: 'manage-my-life-test-' + sentKey,
     url: './index.html#schoolSection'
@@ -885,17 +915,29 @@ function getUpcomingTestAssignments() {
   lookaheadEnd.setDate(lookaheadEnd.getDate() + TEST_NOTIFICATION_LOOKAHEAD_DAYS + 1);
 
   return collectCalendarItems()
+    .filter((item) => !isManageMyLifeTestReminder(item))
+    .map((item) => ({ ...item, testMatch: getTestRuleMatch(item) }))
     .filter((item) => {
       const due = new Date(item.start || item.dueAt);
       if (Number.isNaN(due.getTime())) {
         return false;
       }
-      return due >= todayStart && due < lookaheadEnd && isTestLikeItem(item);
+      return due >= todayStart && due < lookaheadEnd && item.testMatch;
     })
     .sort((a, b) => new Date(a.start || a.dueAt) - new Date(b.start || b.dueAt));
 }
 
 function isTestLikeItem(item) {
+  return !!getTestRuleMatch(item);
+}
+
+function isManageMyLifeTestReminder(item) {
+  const title = String(item.title || item.name || '');
+  const details = String(item.description || item.details || '');
+  return item.source === 'google-calendar' && /^TEST:/i.test(title) && details.includes('Created by ManageMyLife');
+}
+
+function getTestRuleMatch(item) {
   const searchText = [
     item.name,
     item.title,
@@ -908,7 +950,11 @@ function isTestLikeItem(item) {
   ].filter(Boolean).join(' ');
 
   if (TEST_KEYWORD_PATTERN.test(searchText)) {
-    return true;
+    return {
+      label: 'Keyword rule',
+      confidence: 'High',
+      reason: 'Matched test, quiz, exam, assessment, final, midterm, benchmark, MCQ, or multiple choice.'
+    };
   }
 
   const courseText = String(item.courseName || '').toLowerCase();
@@ -919,7 +965,81 @@ function isTestLikeItem(item) {
   const looksLikeTeacherTestCode = /^tm\s*\d{1,3}$/i.test(titleText);
   const hasPhysicsTestDetails = /\bmcq\b|multiple\s*choice|units?\s*0?\d+|oscillations?|fluids?/.test(detailText);
 
-  return isPhysicsCourse && (looksLikeTeacherTestCode || hasPhysicsTestDetails);
+  if (isPhysicsCourse && (looksLikeTeacherTestCode || hasPhysicsTestDetails)) {
+    return {
+      label: 'AP Physics rule',
+      confidence: 'High',
+      reason: 'Physics class item matched TM##, MCQ, unit focus, oscillations, or fluids.'
+    };
+  }
+
+  const customMatch = getCustomTestRuleMatch(item);
+  if (customMatch) {
+    return customMatch;
+  }
+
+  return null;
+}
+
+function getCustomTestRuleMatch(item) {
+  const courseText = String(item.courseName || '').toLowerCase();
+  const titleText = String(item.name || item.title || '').toLowerCase();
+  const detailText = String((item.description || '') + ' ' + (item.details || '') + ' ' + (item.itemType || '')).toLowerCase();
+
+  for (const rule of testNotificationState.customRules || []) {
+    const courseOk = !rule.course || courseText.includes(rule.course.toLowerCase());
+    const titleOk = !rule.title || titleText.includes(rule.title.toLowerCase());
+    const detailsOk = !rule.details || detailText.includes(rule.details.toLowerCase());
+    if (courseOk && titleOk && detailsOk) {
+      return {
+        label: rule.label || 'Custom class rule',
+        confidence: 'Custom',
+        reason: 'Matched your saved teacher/class rule.'
+      };
+    }
+  }
+
+  return null;
+}
+
+function findTestReminderToSend(upcomingTests) {
+  const now = new Date();
+  const reminderOptions = getSelectedReminderOptions();
+
+  for (const item of upcomingTests) {
+    const due = new Date(item.start || item.dueAt);
+    const minutesUntil = (due.getTime() - now.getTime()) / 60000;
+
+    for (const reminder of reminderOptions) {
+      const sentKey = getTestNotificationKey(item) + '::' + reminder.minutes;
+      if (!testNotificationState.sent[sentKey] && shouldSendForReminder(minutesUntil, due, reminder.minutes)) {
+        return { item, reminder };
+      }
+    }
+  }
+
+  return null;
+}
+
+function shouldSendForReminder(minutesUntil, due, reminderMinutes) {
+  const windowMinutes = reminderMinutes >= 1440 ? 720 : Math.max(90, reminderMinutes);
+  return minutesUntil <= reminderMinutes && minutesUntil >= reminderMinutes - windowMinutes;
+}
+
+function getSelectedReminderMinutes() {
+  const saved = Array.isArray(testNotificationState.settings.reminderMinutes) ? testNotificationState.settings.reminderMinutes : DEFAULT_TEST_REMINDER_MINUTES;
+  const cleaned = saved.map(Number).filter((value) => TEST_REMINDER_OPTIONS.some((option) => option.minutes === value));
+  return cleaned.length ? cleaned : DEFAULT_TEST_REMINDER_MINUTES.slice();
+}
+
+function getSelectedReminderOptions() {
+  const selected = getSelectedReminderMinutes();
+  return TEST_REMINDER_OPTIONS.filter((option) => selected.includes(option.minutes));
+}
+
+function getReminderLabel(minutes) {
+  const match = TEST_REMINDER_OPTIONS.find((option) => option.minutes === Number(minutes));
+  return match ? match.label : String(minutes) + ' minutes before';
 }
 
 function buildTestNotificationTitle(item) {
@@ -937,11 +1057,12 @@ function buildTestNotificationTitle(item) {
   return 'Test coming up';
 }
 
-function buildTestNotificationBody(item, count) {
+function buildTestNotificationBody(item, count, reminder) {
   const title = item.name || item.title || 'School test';
   const course = item.courseName ? item.courseName + ' - ' : '';
-  const extra = count > 1 ? ' You have ' + count + ' test-type items in the next 7 days.' : '';
-  return course + title + ' is due ' + formatDueDate(item.start || item.dueAt) + '.' + extra;
+  const timing = reminder ? getReminderLabel(reminder.minutes) + ': ' : '';
+  const extra = count > 1 ? ' You have ' + count + ' test-type items in the next 14 days.' : '';
+  return timing + course + title + ' is due ' + formatDueDate(item.start || item.dueAt) + '.' + extra;
 }
 
 async function showTestNotification(title, body, data) {
@@ -975,6 +1096,245 @@ async function showTestNotification(title, body, data) {
   return false;
 }
 
+
+function renderReminderTimingButtons() {
+  if (!els.testReminderTiming) {
+    return;
+  }
+
+  const selected = getSelectedReminderMinutes();
+  els.testReminderTiming.innerHTML = TEST_REMINDER_OPTIONS.map((option) => (
+    '<button class="chip reminder-chip ' + (selected.includes(option.minutes) ? 'active' : '') + '" type="button" data-minutes="' + option.minutes + '">' + escapeHtml(option.label) + '</button>'
+  )).join('');
+
+  Array.from(els.testReminderTiming.querySelectorAll('.reminder-chip')).forEach((button) => {
+    button.addEventListener('click', () => toggleReminderTiming(button));
+  });
+}
+
+function toggleReminderTiming(button) {
+  const minutes = Number(button.getAttribute('data-minutes'));
+  const selected = getSelectedReminderMinutes();
+  const exists = selected.includes(minutes);
+  let next = exists ? selected.filter((value) => value !== minutes) : selected.concat(minutes);
+
+  if (!next.length) {
+    next = [minutes];
+  }
+
+  testNotificationState.settings.reminderMinutes = next.sort((a, b) => b - a);
+  saveTestNotificationSettings();
+  renderReminderTimingButtons();
+  refreshTestNotificationStatus();
+}
+
+function renderUpcomingTestsPanel() {
+  if (!els.upcomingTestsList || !els.upcomingTestsSummary) {
+    return;
+  }
+
+  const upcomingTests = getUpcomingTestAssignments();
+  els.upcomingTestsSummary.textContent = upcomingTests.length
+    ? upcomingTests.length + ' test-type item' + (upcomingTests.length === 1 ? '' : 's') + ' found in the next 14 days.'
+    : 'No upcoming tests found in synced school items yet.';
+
+  els.upcomingTestsList.innerHTML = '';
+  if (!upcomingTests.length) {
+    els.upcomingTestsList.innerHTML = '<div class="entry assignment-card"><div class="entry-top"><strong>No tests found yet</strong><span class="mini">Sync Canvas, Edgenuity, or Google Calendar. I will keep watching.</span></div></div>';
+    return;
+  }
+
+  upcomingTests.slice(0, 6).forEach((item) => {
+    els.upcomingTestsList.appendChild(buildUpcomingTestCard(item));
+  });
+}
+
+function buildUpcomingTestCard(item) {
+  const card = document.createElement('div');
+  card.className = 'entry assignment-card test-card';
+
+  const match = item.testMatch || getTestRuleMatch(item) || { label: 'Test rule', confidence: 'Maybe', reason: 'This looks test-like.' };
+  const title = item.name || item.title || 'School test';
+  const details = [item.courseName, formatDueDate(item.start || item.dueAt), match.confidence + ' confidence'].filter(Boolean).join(' | ');
+
+  const top = document.createElement('div');
+  top.className = 'entry-top';
+  top.innerHTML = '<span class="assignment-tag week">' + escapeHtml(match.label) + '</span><strong>' + escapeHtml(title) + '</strong><span class="assignment-meta">' + escapeHtml(details) + '</span><span class="assignment-meta">Why: ' + escapeHtml(match.reason) + '</span>';
+  card.appendChild(top);
+
+  const actions = document.createElement('div');
+  actions.className = 'assignment-actions test-actions';
+
+  const studyButton = document.createElement('button');
+  studyButton.type = 'button';
+  studyButton.className = 'btn primary';
+  studyButton.textContent = 'Study plan';
+  studyButton.addEventListener('click', () => renderStudyPlan(item));
+  actions.appendChild(studyButton);
+
+  const calendarButton = document.createElement('button');
+  calendarButton.type = 'button';
+  calendarButton.className = 'btn secondary';
+  calendarButton.textContent = 'Add Google reminders';
+  calendarButton.addEventListener('click', () => createGoogleCalendarReminder(item));
+  actions.appendChild(calendarButton);
+
+  if (item.htmlUrl) {
+    const openLink = document.createElement('a');
+    openLink.className = 'btn ghost';
+    openLink.href = item.htmlUrl;
+    openLink.target = '_blank';
+    openLink.rel = 'noopener noreferrer';
+    openLink.textContent = item.openLabel || 'Open';
+    actions.appendChild(openLink);
+  }
+
+  card.appendChild(actions);
+  return card;
+}
+
+function renderStudyPlan(item) {
+  if (!els.testStudyPlanPanel) {
+    return;
+  }
+
+  const plan = buildStudyPlan(item);
+  els.testStudyPlanPanel.innerHTML =
+    '<div class="study-plan-card">' +
+      '<p class="eyebrow">Quick study plan</p>' +
+      '<h3>' + escapeHtml(plan.title) + '</h3>' +
+      '<p class="mini">' + escapeHtml(plan.summary) + '</p>' +
+      '<ol>' + plan.steps.map((step) => '<li>' + escapeHtml(step) + '</li>').join('') + '</ol>' +
+    '</div>';
+  els.testStudyPlanPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function buildStudyPlan(item) {
+  const due = new Date(item.start || item.dueAt);
+  const now = new Date();
+  const daysUntil = Math.ceil((new Date(due.getFullYear(), due.getMonth(), due.getDate()) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
+  const title = item.name || item.title || 'Upcoming test';
+  const details = String((item.description || '') + ' ' + (item.details || '')).trim();
+  const focus = details ? 'Focus from Canvas: ' + details.slice(0, 140) : 'Focus on the weakest unit first, then do practice questions.';
+
+  if (daysUntil <= 0) {
+    return {
+      title: title + ' today',
+      summary: 'Keep it simple. Review, practice, then stop cramming.',
+      steps: [
+        'Spend 10 minutes reading the assignment details and writing the topics on paper.',
+        'Do one 25-minute practice block on the hardest topic. ' + focus,
+        'Make a tiny cheat sheet from memory, then check what you forgot.',
+        'Before the test, do 5 calm minutes: formulas, units, and common mistakes.'
+      ]
+    };
+  }
+
+  if (daysUntil === 1) {
+    return {
+      title: title + ' tomorrow',
+      summary: 'Two focused blocks beats panic scrolling.',
+      steps: [
+        'Tonight: do 35 minutes of practice questions. ' + focus,
+        'Write down every missed question as ?mistake -> fix.?',
+        'Tomorrow morning: review formulas, vocab, and the mistake list for 10 minutes.',
+        'Stop studying early enough to sleep. Sleep is part of the grade.'
+      ]
+    };
+  }
+
+  return {
+    title: title + ' in ' + daysUntil + ' days',
+    summary: 'Spread it out so the test does not jump-scare you.',
+    steps: [
+      'Today: make a topic list from the assignment details. ' + focus,
+      'Next study block: do practice questions before looking at notes.',
+      'Two nights before: redo missed questions and make a formula/topic sheet.',
+      'Night before: light review only, then protect sleep.'
+    ]
+  };
+}
+
+async function createGoogleCalendarReminder(item) {
+  const dueAt = item.start || item.dueAt;
+  if (!dueAt) {
+    showSchoolError('This test does not have a due date, so I cannot add it to Google Calendar yet.');
+    return;
+  }
+
+  const reminderMinutes = getSelectedReminderMinutes();
+  showSchoolStatus('Adding Google Calendar reminders...');
+
+  try {
+    const result = await apiRequest('createTestCalendarReminder', {
+      title: item.name || item.title || 'School test',
+      courseName: item.courseName || '',
+      dueAt: dueAt,
+      htmlUrl: item.htmlUrl || '',
+      source: item.source || 'school',
+      details: String(item.description || item.details || '').slice(0, 500),
+      reminderMinutes: reminderMinutes.join(',')
+    });
+    showSchoolStatus('Google Calendar reminder saved: ' + (result.title || 'test reminder') + '.');
+    syncGoogleCalendarEvents();
+  } catch (error) {
+    showSchoolError(error && error.message ? error.message : String(error));
+  }
+}
+
+function renderTestRulesList() {
+  if (!els.testRulesList) {
+    return;
+  }
+
+  const builtIn = [
+    'Keyword rule: test, quiz, exam, assessment, final, midterm, benchmark, MCQ, or multiple choice.',
+    'AP Physics rule: course contains Physics and title looks like TM## or details mention MCQ/unit focus.'
+  ];
+  const custom = (testNotificationState.customRules || []).map((rule) => (rule.label || 'Custom rule') + ': course "' + (rule.course || '*') + '", title "' + (rule.title || '*') + '", details "' + (rule.details || '*') + '"');
+  els.testRulesList.innerHTML = builtIn.concat(custom).map((rule) => '<div class="rule-pill">' + escapeHtml(rule) + '</div>').join('');
+}
+
+function saveCustomTestRule() {
+  const rule = {
+    course: String(els.testRuleCourse ? els.testRuleCourse.value : '').trim(),
+    title: String(els.testRuleTitle ? els.testRuleTitle.value : '').trim(),
+    details: String(els.testRuleDetails ? els.testRuleDetails.value : '').trim(),
+    label: String(els.testRuleLabel ? els.testRuleLabel.value : '').trim() || 'Custom class rule'
+  };
+
+  if (!rule.course && !rule.title && !rule.details) {
+    showSchoolError('Add at least one rule clue, like course contains AP Phys or title contains TM.');
+    return;
+  }
+
+  testNotificationState.customRules.push(rule);
+  localStorage.setItem(TEST_CLASS_RULES_KEY, JSON.stringify(testNotificationState.customRules));
+  if (els.testRuleCourse) els.testRuleCourse.value = '';
+  if (els.testRuleTitle) els.testRuleTitle.value = '';
+  if (els.testRuleDetails) els.testRuleDetails.value = '';
+  if (els.testRuleLabel) els.testRuleLabel.value = '';
+  renderTestRulesList();
+  renderUpcomingTestsPanel();
+  refreshTestNotificationStatus();
+  showSchoolStatus('Teacher/class rule saved on this device.');
+}
+
+
+function clearCustomTestRules() {
+  const ok = window.confirm('Clear your custom teacher/class rules? Built-in rules will stay on.');
+  if (!ok) {
+    return;
+  }
+
+  testNotificationState.customRules = [];
+  localStorage.setItem(TEST_CLASS_RULES_KEY, JSON.stringify(testNotificationState.customRules));
+  renderTestRulesList();
+  renderUpcomingTestsPanel();
+  refreshTestNotificationStatus();
+  showSchoolStatus('Custom teacher/class rules cleared.');
+}
+
 function refreshTestNotificationStatus() {
   if (!els.testNotificationStatus) {
     return;
@@ -982,6 +1342,9 @@ function refreshTestNotificationStatus() {
 
   const upcomingTests = getUpcomingTestAssignments();
   const nextTest = upcomingTests[0];
+  renderUpcomingTestsPanel();
+  renderTestRulesList();
+  renderReminderTimingButtons();
 
   if (!supportsTestNotifications()) {
     updateTestNotificationStatus('To use iPhone notifications: add ManageMyLife to your Home Screen, open it from that icon, then tap Turn on test alerts.');
@@ -1004,7 +1367,7 @@ function refreshTestNotificationStatus() {
   }
 
   const hint = nextTest ? ' I already see ' + (nextTest.name || nextTest.title || 'a test') + ' coming up.' : '';
-  updateTestNotificationStatus('Tap Turn on test alerts. I will watch synced items for test, quiz, exam, assessment, final, midterm, or benchmark.' + hint);
+  updateTestNotificationStatus('Tap Turn on test alerts. I will watch synced items and teacher/class rules for test, quiz, exam, assessment, final, midterm, benchmark, MCQ, and Physics TM items.' + hint);
   setTestNotificationButtonLabels('Turn on test alerts', 'Send test notification');
 }
 
@@ -1039,6 +1402,15 @@ function pruneOldTestNotifications() {
       delete testNotificationState.sent[key];
     }
   });
+}
+
+
+function loadCustomTestRules() {
+  try {
+    return JSON.parse(localStorage.getItem(TEST_CLASS_RULES_KEY) || '[]');
+  } catch (error) {
+    return [];
+  }
 }
 
 function loadTestNotificationSettings() {

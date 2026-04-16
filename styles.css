@@ -251,6 +251,78 @@ textarea {
   padding: 10px 12px;
 }
 
+.test-tool-block,
+.test-rules-box,
+.study-plan-card {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(15, 108, 93, 0.14);
+  border-radius: 18px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.reminder-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.reminder-chip {
+  min-height: 54px;
+}
+
+.test-card {
+  border-color: rgba(15, 108, 93, 0.18);
+}
+
+.test-actions {
+  grid-template-columns: 1fr;
+}
+
+.test-rules-box summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.rule-list,
+.rule-form {
+  display: grid;
+  gap: 10px;
+}
+
+.rule-pill {
+  background: rgba(15, 108, 93, 0.08);
+  border-radius: 14px;
+  padding: 9px 10px;
+  color: var(--accent-strong);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.study-plan-card {
+  background: linear-gradient(180deg, #171412 0%, #2a241d 100%);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.study-plan-card .mini,
+.study-plan-card .eyebrow {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.study-plan-card ol {
+  margin: 0;
+  padding-left: 24px;
+  display: grid;
+  gap: 8px;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.study-plan-card li::marker {
+  font-weight: 800;
+  color: #b9e6db;
+}
+
 button:disabled {
   opacity: 0.55;
 }
