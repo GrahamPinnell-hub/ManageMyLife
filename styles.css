@@ -238,6 +238,23 @@ textarea {
   gap: 12px;
 }
 
+.notification-box {
+  background:
+    radial-gradient(circle at top right, rgba(15, 108, 93, 0.13), transparent 34%),
+    linear-gradient(180deg, #ffffff 0%, #f1faf7 100%);
+  border-color: rgba(15, 108, 93, 0.22);
+}
+
+.notification-status {
+  background: rgba(15, 108, 93, 0.08);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+button:disabled {
+  opacity: 0.55;
+}
+
 .stepper {
   display: grid;
   grid-template-columns: 84px 1fr 84px;

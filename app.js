@@ -9,6 +9,10 @@ const EDGENUITY_DEFAULT_API_BASE = 'https://r07.core.learn.edgenuity.com';
 const GOOGLE_CALENDAR_EVENTS_KEY = 'manage-my-life-google-calendar-events';
 const GOOGLE_CALENDAR_NAME_KEY = 'manage-my-life-google-calendar-name';
 const DISMISSED_ASSIGNMENTS_KEY = 'manage-my-life-dismissed-assignments';
+const TEST_NOTIFICATION_SETTINGS_KEY = 'manage-my-life-test-notification-settings';
+const TEST_NOTIFICATION_SENT_KEY = 'manage-my-life-test-notification-sent';
+const TEST_NOTIFICATION_LOOKAHEAD_DAYS = 7;
+const TEST_KEYWORD_PATTERN = /\b(test|quiz|exam|assessment|final|midterm|benchmark)\b/i;
 const FITNESS_PROFILE_KEY = 'manage-my-life-fitness-profile';
 const FITNESS_DAYS_KEY = 'manage-my-life-fitness-days';
 const FITNESS_FIXED_PROFILE = {
@@ -189,6 +193,9 @@ const els = {
   syncCanvasBtn: document.getElementById('syncCanvasBtn'),
   schoolErrorBox: document.getElementById('schoolErrorBox'),
   schoolStatusBox: document.getElementById('schoolStatusBox'),
+  enableTestNotificationsBtn: document.getElementById('enableTestNotificationsBtn'),
+  sendTestNotificationBtn: document.getElementById('sendTestNotificationBtn'),
+  testNotificationStatus: document.getElementById('testNotificationStatus'),
   canvasAssignmentCount: document.getElementById('canvasAssignmentCount'),
   canvasClassCount: document.getElementById('canvasClassCount'),
   canvasOverdueCount: document.getElementById('canvasOverdueCount'),
@@ -302,6 +309,12 @@ const googleCalendarState = {
 };
 
 const dismissedAssignments = loadDismissedAssignments();
+const testNotificationState = {
+  settings: loadTestNotificationSettings(),
+  sent: loadTestNotificationSent()
+};
+let testNotificationTimer = null;
+let serviceWorkerRegistrationPromise = null;
 const fitnessState = {
   profile: loadFitnessProfile(),
   days: loadFitnessDays()
@@ -315,6 +328,7 @@ function init() {
   renderEdgenuityAssignments();
   renderCalendarView();
   initFitness();
+  initTestNotifications();
   els.date.value = todayValue();
   setHours(1);
   setActivity('Sunday school service');
@@ -355,6 +369,8 @@ function wireButtons() {
   els.syncEdgenuityBtn.addEventListener('click', syncEdgenuityAssignments);
   els.rebuildCalendarBtn.addEventListener('click', () => { renderCalendarView(); showCalendarStatus('School calendar refreshed.'); });
   els.syncGoogleCalendarBtn.addEventListener('click', syncGoogleCalendarEvents);
+  if (els.enableTestNotificationsBtn) els.enableTestNotificationsBtn.addEventListener('click', enableTestNotifications);
+  if (els.sendTestNotificationBtn) els.sendTestNotificationBtn.addEventListener('click', sendManualTestNotification);
   if (els.saveFitnessDayBtn) els.saveFitnessDayBtn.addEventListener('click', saveFitnessDay);
   if (els.saveFitnessProfileBtn) els.saveFitnessProfileBtn.addEventListener('click', saveFitnessProfile);
   if (els.suggestFitnessGoalsBtn) els.suggestFitnessGoalsBtn.addEventListener('click', suggestFitnessGoals);
@@ -502,6 +518,7 @@ async function syncCanvasAssignments() {
     renderCanvasAssignments();
     renderCalendarView();
     showSchoolStatus('Canvas assignments synced.');
+    notifyUpcomingTests(false);
   } catch (error) {
     showSchoolError(error && error.message ? error.message : String(error));
   } finally {
@@ -559,6 +576,7 @@ async function syncEdgenuityAssignments() {
     renderEdgenuityAssignments();
     renderCalendarView();
     showSchoolStatus('Edgenuity assignments synced.');
+    notifyUpcomingTests(false);
   } catch (error) {
     showSchoolError(error && error.message ? error.message : String(error));
   } finally {
@@ -579,6 +597,7 @@ async function syncGoogleCalendarEvents() {
     localStorage.setItem(GOOGLE_CALENDAR_NAME_KEY, googleCalendarState.calendarName);
     renderCalendarView();
     showCalendarStatus('Google Calendar synced.');
+    notifyUpcomingTests(false);
   } catch (error) {
     showCalendarError(error && error.message ? error.message : String(error));
   } finally {
@@ -611,6 +630,7 @@ function renderCalendarView() {
   const todayItems = items.filter((item) => isSameDay(item.start, new Date()));
   renderCalendarList(els.calendarToday, todayItems, 'Nothing on the calendar today.');
   renderCalendarDays(els.calendarWeek, items, 7);
+  refreshTestNotificationStatus();
 }
 
 function collectCalendarItems() {
@@ -704,6 +724,325 @@ function buildCalendarHeadline(item) {
 }
 
 
+
+function initTestNotifications() {
+  refreshTestNotificationStatus();
+
+  if (!supportsTestNotifications()) {
+    return;
+  }
+
+  registerNotificationServiceWorker().catch(() => {});
+
+  if (testNotificationTimer) {
+    window.clearInterval(testNotificationTimer);
+  }
+
+  testNotificationTimer = window.setInterval(() => {
+    notifyUpcomingTests(false);
+  }, 30 * 60 * 1000);
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      refreshTestNotificationStatus();
+      notifyUpcomingTests(false);
+    }
+  });
+
+  notifyUpcomingTests(false);
+}
+
+function supportsTestNotifications() {
+  return !!(window.isSecureContext && 'Notification' in window && 'serviceWorker' in navigator);
+}
+
+async function enableTestNotifications() {
+  const allowed = await ensureTestNotificationsAllowed(true);
+  refreshTestNotificationStatus();
+
+  if (!allowed) {
+    return;
+  }
+
+  await showTestNotification(
+    'Test alerts are on',
+    'I will remind you when a synced test, quiz, exam, assessment, or final is coming up.',
+    { tag: 'manage-my-life-test-alerts-on' }
+  );
+  notifyUpcomingTests(false);
+}
+
+async function sendManualTestNotification() {
+  const allowed = await ensureTestNotificationsAllowed(true);
+  refreshTestNotificationStatus();
+
+  if (!allowed) {
+    return;
+  }
+
+  notifyUpcomingTests(true);
+}
+
+async function ensureTestNotificationsAllowed(shouldAsk) {
+  if (!supportsTestNotifications()) {
+    updateTestNotificationStatus('iPhone note: install ManageMyLife to your Home Screen, open it from the app icon, then tap Turn on test alerts. Safari tabs cannot always ask for web notifications.');
+    return false;
+  }
+
+  let permission = Notification.permission;
+  if (permission === 'default' && shouldAsk) {
+    permission = await Notification.requestPermission();
+  }
+
+  testNotificationState.settings.enabled = permission === 'granted';
+  testNotificationState.settings.updatedAt = new Date().toISOString();
+  saveTestNotificationSettings();
+
+  if (permission !== 'granted') {
+    return false;
+  }
+
+  await registerNotificationServiceWorker();
+  return true;
+}
+
+function registerNotificationServiceWorker() {
+  if (!('serviceWorker' in navigator)) {
+    return Promise.resolve(null);
+  }
+
+  if (!serviceWorkerRegistrationPromise) {
+    serviceWorkerRegistrationPromise = navigator.serviceWorker.register('./sw.js').catch((error) => {
+      serviceWorkerRegistrationPromise = null;
+      updateTestNotificationStatus('Notification setup hit a problem. Try reloading the app, then tap Turn on test alerts again.');
+      throw error;
+    });
+  }
+
+  return serviceWorkerRegistrationPromise;
+}
+
+async function notifyUpcomingTests(force) {
+  if (!force && (!testNotificationState.settings.enabled || !supportsTestNotifications() || Notification.permission !== 'granted')) {
+    refreshTestNotificationStatus();
+    return;
+  }
+
+  const allowed = await ensureTestNotificationsAllowed(force);
+  if (!allowed) {
+    refreshTestNotificationStatus();
+    return;
+  }
+
+  const upcomingTests = getUpcomingTestAssignments();
+  if (!upcomingTests.length) {
+    if (force) {
+      await showTestNotification(
+        'No upcoming tests found',
+        'I checked synced Canvas, Edgenuity, and calendar items for the next 7 days.',
+        { tag: 'manage-my-life-no-tests' }
+      );
+    }
+    refreshTestNotificationStatus();
+    return;
+  }
+
+  const nextTest = upcomingTests[0];
+  const sentKey = getTestNotificationKey(nextTest);
+  if (!force && testNotificationState.sent[sentKey]) {
+    refreshTestNotificationStatus();
+    return;
+  }
+
+  const title = buildTestNotificationTitle(nextTest);
+  const body = buildTestNotificationBody(nextTest, upcomingTests.length);
+  const shown = await showTestNotification(title, body, {
+    tag: 'manage-my-life-test-' + sentKey,
+    url: './index.html#schoolSection'
+  });
+
+  if (shown) {
+    testNotificationState.sent[sentKey] = new Date().toISOString();
+    pruneOldTestNotifications();
+    saveTestNotificationSent();
+  }
+
+  refreshTestNotificationStatus();
+}
+
+function getUpcomingTestAssignments() {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const lookaheadEnd = new Date(todayStart);
+  lookaheadEnd.setDate(lookaheadEnd.getDate() + TEST_NOTIFICATION_LOOKAHEAD_DAYS + 1);
+
+  return collectCalendarItems()
+    .filter((item) => {
+      const due = new Date(item.start || item.dueAt);
+      if (Number.isNaN(due.getTime())) {
+        return false;
+      }
+      return due >= todayStart && due < lookaheadEnd && isTestLikeItem(item);
+    })
+    .sort((a, b) => new Date(a.start || a.dueAt) - new Date(b.start || b.dueAt));
+}
+
+function isTestLikeItem(item) {
+  const searchText = [
+    item.name,
+    item.title,
+    item.itemType,
+    item.courseName,
+    item.unitName,
+    item.lessonName
+  ].filter(Boolean).join(' ');
+
+  return TEST_KEYWORD_PATTERN.test(searchText);
+}
+
+function buildTestNotificationTitle(item) {
+  const due = new Date(item.start || item.dueAt);
+  const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  if (isSameDay(due, today)) {
+    return 'Test today';
+  }
+  if (isSameDay(due, tomorrow)) {
+    return 'Test tomorrow';
+  }
+  return 'Test coming up';
+}
+
+function buildTestNotificationBody(item, count) {
+  const title = item.name || item.title || 'School test';
+  const course = item.courseName ? item.courseName + ' - ' : '';
+  const extra = count > 1 ? ' You have ' + count + ' test-type items in the next 7 days.' : '';
+  return course + title + ' is due ' + formatDueDate(item.start || item.dueAt) + '.' + extra;
+}
+
+async function showTestNotification(title, body, data) {
+  try {
+    const registration = await registerNotificationServiceWorker();
+    if (registration && registration.showNotification) {
+      await registration.showNotification(title, {
+        body: body,
+        icon: './icon-192.png',
+        badge: './icon-192.png',
+        tag: data && data.tag ? data.tag : 'manage-my-life-test-alert',
+        renotify: true,
+        data: data || {}
+      });
+      return true;
+    }
+
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title, {
+        body: body,
+        icon: './icon-192.png',
+        tag: data && data.tag ? data.tag : 'manage-my-life-test-alert',
+        data: data || {}
+      });
+      return true;
+    }
+  } catch (error) {
+    updateTestNotificationStatus('I could not send the notification yet. Try reopening the app from the Home Screen and tap Turn on test alerts again.');
+  }
+
+  return false;
+}
+
+function refreshTestNotificationStatus() {
+  if (!els.testNotificationStatus) {
+    return;
+  }
+
+  const upcomingTests = getUpcomingTestAssignments();
+  const nextTest = upcomingTests[0];
+
+  if (!supportsTestNotifications()) {
+    updateTestNotificationStatus('To use iPhone notifications: add ManageMyLife to your Home Screen, open it from that icon, then tap Turn on test alerts.');
+    setTestNotificationButtonLabels('Turn on test alerts', 'Send test notification');
+    return;
+  }
+
+  if (Notification.permission === 'denied') {
+    updateTestNotificationStatus('Notifications are blocked on this device. Turn them back on in iPhone Settings for ManageMyLife, then come back here.');
+    setTestNotificationButtonLabels('Notifications blocked', 'Send test notification');
+    return;
+  }
+
+  if (Notification.permission === 'granted' && testNotificationState.settings.enabled) {
+    const watched = upcomingTests.length ? upcomingTests.length + ' upcoming test/quiz item' + (upcomingTests.length === 1 ? '' : 's') : 'no upcoming tests found yet';
+    const next = nextTest ? ' Next: ' + (nextTest.name || nextTest.title || 'school item') + ' on ' + formatDueDate(nextTest.start || nextTest.dueAt) + '.' : '';
+    updateTestNotificationStatus('Test alerts are on. I am watching ' + watched + '.' + next);
+    setTestNotificationButtonLabels('Test alerts on', 'Send test notification');
+    return;
+  }
+
+  const hint = nextTest ? ' I already see ' + (nextTest.name || nextTest.title || 'a test') + ' coming up.' : '';
+  updateTestNotificationStatus('Tap Turn on test alerts. I will watch synced items for test, quiz, exam, assessment, final, midterm, or benchmark.' + hint);
+  setTestNotificationButtonLabels('Turn on test alerts', 'Send test notification');
+}
+
+function updateTestNotificationStatus(message) {
+  if (els.testNotificationStatus) {
+    els.testNotificationStatus.textContent = message;
+  }
+}
+
+function setTestNotificationButtonLabels(enableText, testText) {
+  if (els.enableTestNotificationsBtn) {
+    els.enableTestNotificationsBtn.textContent = enableText;
+    els.enableTestNotificationsBtn.disabled = enableText === 'Notifications blocked';
+  }
+  if (els.sendTestNotificationBtn) {
+    els.sendTestNotificationBtn.textContent = testText;
+  }
+}
+
+function getTestNotificationKey(item) {
+  const source = item.source || 'school';
+  const title = item.name || item.title || 'test';
+  const due = item.start || item.dueAt || '';
+  return [source, title, due].join('|').replace(/[^a-z0-9|:-]/gi, '').slice(0, 110);
+}
+
+function pruneOldTestNotifications() {
+  const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
+  Object.keys(testNotificationState.sent).forEach((key) => {
+    const sentAt = new Date(testNotificationState.sent[key]).getTime();
+    if (!sentAt || sentAt < cutoff) {
+      delete testNotificationState.sent[key];
+    }
+  });
+}
+
+function loadTestNotificationSettings() {
+  try {
+    return JSON.parse(localStorage.getItem(TEST_NOTIFICATION_SETTINGS_KEY) || 'null') || { enabled: false };
+  } catch (error) {
+    return { enabled: false };
+  }
+}
+
+function saveTestNotificationSettings() {
+  localStorage.setItem(TEST_NOTIFICATION_SETTINGS_KEY, JSON.stringify(testNotificationState.settings));
+}
+
+function loadTestNotificationSent() {
+  try {
+    return JSON.parse(localStorage.getItem(TEST_NOTIFICATION_SENT_KEY) || '{}');
+  } catch (error) {
+    return {};
+  }
+}
+
+function saveTestNotificationSent() {
+  localStorage.setItem(TEST_NOTIFICATION_SENT_KEY, JSON.stringify(testNotificationState.sent));
+}
+
 function dismissAssignment(assignment) {
   const assignmentId = getDismissKey(assignment);
   if (!assignmentId) {
@@ -725,6 +1064,7 @@ function dismissAssignment(assignment) {
   renderEdgenuityAssignments();
   renderCalendarView();
   showSchoolStatus('Assignment dismissed on this device.');
+  refreshTestNotificationStatus();
 }
 
 function isDismissedAssignment(assignment) {
@@ -762,6 +1102,7 @@ function renderCanvasAssignments() {
   renderAssignmentList(els.canvasDueToday, dueToday, 'Nothing due today.');
   renderAssignmentList(els.canvasDueThisWeek, dueThisWeek, 'Nothing due this week.');
   renderAssignmentsByClass(assignments);
+  refreshTestNotificationStatus();
 }
 
 function renderEdgenuityAssignments() {
@@ -785,6 +1126,7 @@ function renderEdgenuityAssignments() {
   renderAssignmentList(els.edgenuityDueToday, dueToday, 'Nothing due today.');
   renderAssignmentList(els.edgenuityDueThisWeek, dueThisWeek, 'Nothing due this week.');
   renderAssignmentsByGroup(els.edgenuityByUnit, assignments, (assignment) => assignment.unitName || assignment.lessonName || 'Other work', 'No Edgenuity groups yet', 'Sync Edgenuity to fill this area.');
+  refreshTestNotificationStatus();
 }
 
 function renderAssignmentList(container, assignments, emptyMessage) {

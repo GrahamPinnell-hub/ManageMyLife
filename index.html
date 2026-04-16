@@ -251,6 +251,22 @@
         <div id="schoolErrorBox" class="error"></div>
         <div id="schoolStatusBox" class="status"></div>
 
+        <div class="control-box notification-box section-gap">
+          <div class="section-head compact-head">
+            <div>
+              <p class="eyebrow">Phone alerts</p>
+              <h3>Test notifications</h3>
+              <p class="mini">Tap once on your iPhone. I will watch synced Canvas, Edgenuity, and calendar items for tests, quizzes, exams, assessments, finals, midterms, and benchmarks.</p>
+            </div>
+          </div>
+          <div class="button-stack">
+            <button class="btn secondary" id="enableTestNotificationsBtn" type="button">Turn on test alerts</button>
+            <button class="btn ghost" id="sendTestNotificationBtn" type="button">Send test notification</button>
+          </div>
+          <p class="mini notification-status" id="testNotificationStatus">Tap Turn on test alerts to ask this phone for notification permission.</p>
+          <p class="notice">iPhone tip: if Safari will not ask, add ManageMyLife to your Home Screen and open it from the app icon first.</p>
+        </div>
+
         <div class="stack section-gap">
           <label class="field">Canvas base URL
             <input id="canvasBaseUrl" type="url" placeholder="https://your-school.instructure.com">
