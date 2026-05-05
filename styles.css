@@ -636,6 +636,10 @@ button:disabled {
   display: none;
 }
 
+.app-screen-section[hidden] {
+  display: none !important;
+}
+
 .screen-open {
   overflow: hidden;
 }

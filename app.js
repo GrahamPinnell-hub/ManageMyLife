@@ -519,6 +519,7 @@ function openOverlaySection(sectionId) {
     const isOpen = id === sectionId;
     section.classList.toggle('is-open', isOpen);
     section.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+    section.hidden = !isOpen;
     if (isOpen) {
       section.scrollTop = 0;
     }
@@ -533,6 +534,7 @@ function closeOverlaySections() {
     if (!section) return;
     section.classList.remove('is-open');
     section.setAttribute('aria-hidden', 'true');
+    section.hidden = true;
   });
 }
 
