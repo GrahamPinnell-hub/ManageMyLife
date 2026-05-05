@@ -715,6 +715,222 @@ select {
   gap: 8px;
 }
 
+.fitness-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.fitness-stat-card strong {
+  font-size: 1.22rem;
+}
+
+.fitness-routine-shell,
+.fitness-dashboard-grid,
+.fitness-trends-grid,
+.fitness-side-stack,
+.fitness-goal-list,
+.fitness-routine-meta,
+.fitness-week-strip {
+  display: grid;
+  gap: 12px;
+}
+
+.fitness-routine-hero {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid rgba(15, 108, 93, 0.14);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(15, 108, 93, 0.14), transparent 30%),
+    linear-gradient(135deg, #ffffff 0%, #f5fbf8 100%);
+}
+
+.fitness-routine-copy h3 {
+  margin: 4px 0 6px;
+  font-size: 1.1rem;
+}
+
+.fitness-routine-meta {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.fitness-meta-pill {
+  padding: 10px 12px;
+  border: 1px solid rgba(15, 108, 93, 0.14);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.86);
+}
+
+.fitness-meta-pill strong,
+.fitness-day-chip strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.fitness-muscle-card {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 22px;
+  background: #0e1715;
+  color: #f8fdfb;
+}
+
+.fitness-muscle-map svg {
+  width: 100%;
+  max-width: 180px;
+  height: auto;
+}
+
+.fitness-muscle-base {
+  fill: #253330;
+}
+
+.fitness-muscle-highlight {
+  fill: #2ed0a7;
+}
+
+.fitness-week-strip {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.fitness-day-chip {
+  padding: 10px 8px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: white;
+  text-align: center;
+  min-height: 90px;
+}
+
+.fitness-day-chip.active {
+  background: linear-gradient(180deg, #0f6c5d 0%, #15756a 100%);
+  color: white;
+  border-color: transparent;
+}
+
+.fitness-day-chip.done {
+  box-shadow: inset 0 0 0 2px rgba(46, 208, 167, 0.45);
+}
+
+.fitness-dashboard-grid {
+  grid-template-columns: 1.35fr 0.95fr;
+  align-items: start;
+}
+
+.fitness-side-stack {
+  gap: 10px;
+}
+
+.fitness-goal-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(23, 20, 18, 0.08);
+}
+
+.fitness-goal-row:last-child {
+  border-bottom: 0;
+}
+
+.fitness-goal-row strong {
+  font-size: 0.92rem;
+}
+
+.fitness-mini-chart {
+  min-height: 112px;
+}
+
+.fitness-mini-chart svg {
+  width: 100%;
+  height: auto;
+}
+
+.bar-bg {
+  fill: #e8f2ee;
+}
+
+.bar-fill {
+  fill: #0f6c5d;
+}
+
+.bar-fill.alt {
+  fill: #2ed0a7;
+}
+
+.chart-label {
+  fill: #675e55;
+  font-size: 12px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.chart-value {
+  fill: #171412;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.workout-exercise-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.workout-exercise-card {
+  border: 1px solid rgba(23, 20, 18, 0.1);
+  border-radius: 18px;
+  background: white;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.exercise-topline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.exercise-topline strong {
+  font-size: 0.94rem;
+}
+
+.exercise-set-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.set-chip {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #edf7f3;
+  color: #0b564b;
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+
+.empty-chart {
+  min-height: 96px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(23, 20, 18, 0.16);
+  border-radius: 16px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 12px;
+}
+
 .target-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -805,6 +1021,18 @@ select {
 }
 
 @media (max-width: 520px) {
+  .fitness-overview-grid,
+  .fitness-routine-meta,
+  .fitness-dashboard-grid,
+  .fitness-routine-hero,
+  .fitness-trends-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fitness-week-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .screen-open .app-screen-section.is-open {
     top: 0;
     width: 100vw;

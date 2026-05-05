@@ -307,7 +307,12 @@ const els = {
   fitnessWeeklyScoreLabel: document.getElementById('fitnessWeeklyScoreLabel'),
   fitnessTodayWorkoutTitle: document.getElementById('fitnessTodayWorkoutTitle'),
   fitnessTodayWorkoutFocus: document.getElementById('fitnessTodayWorkoutFocus'),
+  fitnessRoutineMeta: document.getElementById('fitnessRoutineMeta'),
+  fitnessMuscleMap: document.getElementById('fitnessMuscleMap'),
+  fitnessWeekPlan: document.getElementById('fitnessWeekPlan'),
   fitnessWorkoutPlan: document.getElementById('fitnessWorkoutPlan'),
+  fitnessMacroChart: document.getElementById('fitnessMacroChart'),
+  fitnessConsistencyChart: document.getElementById('fitnessConsistencyChart'),
   fitnessMorningChecklist: document.getElementById('fitnessMorningChecklist'),
   fitnessNightChecklist: document.getElementById('fitnessNightChecklist'),
   fitnessWeightChart: document.getElementById('fitnessWeightChart'),
@@ -317,9 +322,16 @@ const els = {
   fitnessCaloriesProgress: document.getElementById('fitnessCaloriesProgress'),
   fitnessStepsProgress: document.getElementById('fitnessStepsProgress'),
   fitnessWeightTrend: document.getElementById('fitnessWeightTrend'),
+  fitnessWeightTrendDetail: document.getElementById('fitnessWeightTrendDetail'),
   fitnessWorkoutStreak: document.getElementById('fitnessWorkoutStreak'),
+  fitnessWorkoutStreakDetail: document.getElementById('fitnessWorkoutStreakDetail'),
   fitnessAvgSteps: document.getElementById('fitnessAvgSteps'),
+  fitnessAvgStepsDetail: document.getElementById('fitnessAvgStepsDetail'),
   fitnessAvgSleep: document.getElementById('fitnessAvgSleep'),
+  fitnessAvgSleepDetail: document.getElementById('fitnessAvgSleepDetail'),
+  fitnessActiveAvg: document.getElementById('fitnessActiveAvg'),
+  fitnessHistoryDays: document.getElementById('fitnessHistoryDays'),
+  fitnessLastSaved: document.getElementById('fitnessLastSaved'),
   fitnessHistoryList: document.getElementById('fitnessHistoryList'),
   fitnessTodayPanel: document.getElementById('fitnessTodayPanel'),
   fitnessProfilePanel: document.getElementById('fitnessProfilePanel'),
@@ -2270,6 +2282,7 @@ function normalizeFitnessDay(day, dateKey) {
   const existing = day || {};
   return {
     date: existing.date || dateKey,
+    updatedAt: existing.updatedAt || '',
     weight: Number(existing.weight || 0),
     water: Number(existing.water || 0),
     steps: Number(existing.steps || 0),
@@ -2311,6 +2324,7 @@ function readFitnessDayForm() {
   return normalizeFitnessDay({
     ...day,
     date: dateKey,
+    updatedAt: new Date().toISOString(),
     weight: Number(els.fitnessWeight.value || 0),
     water: Number(els.fitnessWater.value || 0),
     steps: Number(els.fitnessSteps.value || 0),
@@ -2345,6 +2359,7 @@ function addFitnessFood() {
     protein: Number(els.foodProtein.value || 0)
   };
   day.foods.push(food);
+  day.updatedAt = new Date().toISOString();
   fitnessState.days[dateKey] = day;
   persistFitnessDays();
   els.foodName.value = '';
@@ -2357,6 +2372,7 @@ function addFitnessFood() {
 function deleteFitnessFood(dateKey, foodId) {
   const day = getFitnessDay(dateKey);
   day.foods = (day.foods || []).filter((food) => food.id !== foodId);
+  day.updatedAt = new Date().toISOString();
   fitnessState.days[dateKey] = day;
   persistFitnessDays();
   renderFitness();
@@ -2410,10 +2426,124 @@ function renderFitness() {
   if (els.fitnessTodayWorkoutTitle) els.fitnessTodayWorkoutTitle.textContent = workout.title;
   if (els.fitnessTodayWorkoutFocus) els.fitnessTodayWorkoutFocus.textContent = workout.focus;
   if (els.fitnessDailyFocus) els.fitnessDailyFocus.textContent = getFitnessFocus(day, profile, totals, weekly, workout);
+  renderFitnessRoutineMeta(workout);
+  renderFitnessWeekPlan(dateKey);
+  renderFitnessMuscleMap(workout);
+  renderFitnessMacroChart(day, totals, profile);
+  renderFitnessConsistencyChart(dateKey, profile);
   renderFitnessWorkout(day, workout);
   renderFitnessChecklists(day);
   renderFitnessFoodList(day);
   renderFitnessHistory();
+}
+
+function renderFitnessRoutineMeta(workout) {
+  if (!els.fitnessRoutineMeta) {
+    return;
+  }
+  const totalExercises = workout.exercises.length;
+  const totalSets = workout.exercises.reduce((sum, exercise) => sum + extractSetCount(exercise[1]), 0);
+  els.fitnessRoutineMeta.innerHTML =
+    '<div class="fitness-meta-pill"><span class="mini">Exercises</span><strong>' + totalExercises + '</strong></div>' +
+    '<div class="fitness-meta-pill"><span class="mini">Total sets</span><strong>' + totalSets + '</strong></div>' +
+    '<div class="fitness-meta-pill"><span class="mini">Planned time</span><strong>' + escapeHtml(workout.time) + '</strong></div>';
+}
+
+function renderFitnessWeekPlan(dateKey) {
+  if (!els.fitnessWeekPlan) {
+    return;
+  }
+  const weekDates = getTrailingDateKeys(dateKey, 7);
+  els.fitnessWeekPlan.innerHTML = weekDates.map((key) => {
+    const workout = getWorkoutForDate(key);
+    const day = normalizeFitnessDay(fitnessState.days[key] || { date: key }, key);
+    const date = new Date(key + 'T00:00:00');
+    const label = date.toLocaleDateString('en-US', { weekday: 'short' });
+    const isToday = key === dateKey;
+    const classes = ['fitness-day-chip'];
+    if (isToday) classes.push('active');
+    if (day.workoutDone) classes.push('done');
+    return '<div class="' + classes.join(' ') + '">' +
+      '<span class="mini">' + label + '</span>' +
+      '<strong>' + escapeHtml(workout.title.split(':')[0]) + '</strong>' +
+      '<span class="mini">' + (day.workoutDone ? 'Done' : workout.type) + '</span>' +
+      '</div>';
+  }).join('');
+}
+
+function renderFitnessMuscleMap(workout) {
+  if (!els.fitnessMuscleMap) {
+    return;
+  }
+  const targets = getWorkoutMuscleTargets(workout);
+  const fill = (name) => targets.includes(name) ? 'fitness-muscle-highlight' : 'fitness-muscle-base';
+  els.fitnessMuscleMap.innerHTML =
+    '<svg viewBox="0 0 160 220" role="img" aria-label="Workout muscle focus">' +
+      '<circle class="' + fill('upper') + '" cx="80" cy="26" r="18"></circle>' +
+      '<rect class="' + fill('chest') + '" x="52" y="50" width="56" height="30" rx="12"></rect>' +
+      '<rect class="' + fill('core') + '" x="60" y="84" width="40" height="42" rx="12"></rect>' +
+      '<rect class="' + fill('shoulders') + '" x="34" y="50" width="16" height="32" rx="8"></rect>' +
+      '<rect class="' + fill('shoulders') + '" x="110" y="50" width="16" height="32" rx="8"></rect>' +
+      '<rect class="' + fill('arms') + '" x="22" y="74" width="16" height="58" rx="8"></rect>' +
+      '<rect class="' + fill('arms') + '" x="122" y="74" width="16" height="58" rx="8"></rect>' +
+      '<rect class="' + fill('legs') + '" x="56" y="132" width="18" height="68" rx="9"></rect>' +
+      '<rect class="' + fill('legs') + '" x="86" y="132" width="18" height="68" rx="9"></rect>' +
+      '<rect class="' + fill('back') + '" x="48" y="52" width="16" height="60" rx="8" opacity="0.92"></rect>' +
+      '<rect class="' + fill('back') + '" x="96" y="52" width="16" height="60" rx="8" opacity="0.92"></rect>' +
+    '</svg>';
+}
+
+function getWorkoutMuscleTargets(workout) {
+  if (workout.key === 'push-chest' || workout.key === 'upper-chest-arms') return ['chest', 'shoulders', 'arms', 'upper'];
+  if (workout.key === 'pull-back-biceps') return ['back', 'arms', 'shoulders', 'upper'];
+  if (workout.key === 'lower-core') return ['legs', 'core'];
+  if (workout.key === 'home-pump-conditioning') return ['chest', 'back', 'arms', 'legs', 'core'];
+  if (workout.key === 'wednesday-recovery') return ['core', 'legs'];
+  return ['core'];
+}
+
+function renderFitnessMacroChart(day, totals, profile) {
+  if (!els.fitnessMacroChart) {
+    return;
+  }
+  const metrics = [
+    { label: 'Protein', value: totals.protein, goal: profile.proteinGoal, suffix: 'g' },
+    { label: 'Calories', value: totals.calories, goal: profile.calorieGoal, suffix: '' },
+    { label: 'Water', value: day.water || 0, goal: profile.waterGoal, suffix: 'c' },
+    { label: 'Steps', value: day.steps || 0, goal: profile.stepGoal, suffix: '' }
+  ];
+  const bars = metrics.map((metric, index) => {
+    const ratio = Math.max(0, Math.min(1, metric.value / Math.max(1, metric.goal)));
+    const y = 8 + (index * 24);
+    return '<text class="chart-label" x="0" y="' + (y + 10) + '">' + escapeHtml(metric.label) + '</text>' +
+      '<rect class="bar-bg" x="72" y="' + y + '" width="150" height="12" rx="6"></rect>' +
+      '<rect class="bar-fill' + (index % 2 ? ' alt' : '') + '" x="72" y="' + y + '" width="' + (150 * ratio).toFixed(1) + '" height="12" rx="6"></rect>' +
+      '<text class="chart-value" x="228" y="' + (y + 10) + '" text-anchor="end">' + metric.value + (metric.suffix || '') + '</text>';
+  }).join('');
+  els.fitnessMacroChart.innerHTML = '<svg viewBox="0 0 232 108" role="img" aria-label="Today fitness progress">' + bars + '</svg>';
+}
+
+function renderFitnessConsistencyChart(dateKey, profile) {
+  if (!els.fitnessConsistencyChart) {
+    return;
+  }
+  const weekDates = getTrailingDateKeys(dateKey, 7);
+  const bars = weekDates.map((key, index) => {
+    const day = normalizeFitnessDay(fitnessState.days[key] || { date: key }, key);
+    const score = Math.round(
+      (Math.min(1, (day.steps || 0) / Math.max(1, profile.stepGoal)) * 35) +
+      (Math.min(1, (day.sleep || 0) / Math.max(1, profile.sleepGoal)) * 25) +
+      (Math.min(1, (getFoodTotals(day).protein || 0) / Math.max(1, profile.proteinGoal)) * 25) +
+      ((day.workoutDone ? 1 : 0) * 15)
+    );
+    const x = 10 + (index * 31);
+    const height = Math.max(10, (score / 100) * 82);
+    const y = 94 - height;
+    const label = new Date(key + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'narrow' });
+    return '<rect class="bar-fill' + (key === dateKey ? ' alt' : '') + '" x="' + x + '" y="' + y.toFixed(1) + '" width="18" height="' + height.toFixed(1) + '" rx="8"></rect>' +
+      '<text class="chart-label" x="' + (x + 9) + '" y="108" text-anchor="middle">' + label + '</text>';
+  }).join('');
+  els.fitnessConsistencyChart.innerHTML = '<svg viewBox="0 0 232 112" role="img" aria-label="Consistency chart">' + bars + '</svg>';
 }
 
 function renderFitnessWorkout(day, workout) {
@@ -2421,16 +2551,23 @@ function renderFitnessWorkout(day, workout) {
     return;
   }
   const completed = !!day.workoutDone;
-  const exercises = workout.exercises.map((exercise) => (
-    '<li><strong>' + escapeHtml(exercise[0]) + '</strong><span>' + escapeHtml(exercise[1]) + ' | ' + escapeHtml(exercise[2]) + '</span></li>'
-  )).join('');
+  const exercises = workout.exercises.map((exercise, index) => {
+    const setCount = extractSetCount(exercise[1]);
+    const setChips = Array.from({ length: Math.max(1, setCount) }, (_, setIndex) => (
+      '<span class="set-chip">Set ' + (setIndex + 1) + '</span>'
+    )).join('');
+    return '<div class="workout-exercise-card">' +
+      '<div class="exercise-topline"><div><strong>' + escapeHtml((index + 1) + '. ' + exercise[0]) + '</strong><div class="mini">' + escapeHtml(exercise[2]) + '</div></div><span class="set-chip">' + escapeHtml(exercise[1]) + '</span></div>' +
+      '<div class="exercise-set-row">' + setChips + '</div>' +
+    '</div>';
+  }).join('');
   els.fitnessWorkoutPlan.innerHTML =
     '<div class="compact-title-row workout-title-row">' +
       '<div><p class="eyebrow">Today\'s plan</p><h3>' + escapeHtml(workout.title) + '</h3><span class="mini">' + escapeHtml(workout.type) + ' | ' + escapeHtml(workout.time) + '</span></div>' +
       '<button class="btn ' + (completed ? 'secondary' : 'primary') + '" id="fitnessWorkoutDoneBtn" type="button">' + (completed ? 'Mark not done' : 'Mark workout done') + '</button>' +
     '</div>' +
     '<p class="mini workout-guidance">Progress rule: when every set hits the top of the rep range with clean form, add a little weight next time. Keep 1-2 reps in reserve on most sets.</p>' +
-    '<ul class="workout-list">' + exercises + '</ul>';
+    '<div class="workout-exercise-grid">' + exercises + '</div>';
   const button = document.getElementById('fitnessWorkoutDoneBtn');
   if (button) {
     button.addEventListener('click', toggleFitnessWorkoutDone);
@@ -2441,6 +2578,7 @@ function toggleFitnessWorkoutDone() {
   const dateKey = els.fitnessDate.value || todayValue();
   const day = readFitnessDayForm();
   day.workoutDone = !day.workoutDone;
+  day.updatedAt = new Date().toISOString();
   els.fitnessWorkoutDone.checked = day.workoutDone;
   fitnessState.days[dateKey] = day;
   persistFitnessDays();
@@ -2472,6 +2610,7 @@ function toggleFitnessChecklist(checkbox) {
   const section = checkbox.getAttribute('data-section');
   const key = checkbox.getAttribute('data-key');
   day.checklists[section][key] = checkbox.checked;
+  day.updatedAt = new Date().toISOString();
   fitnessState.days[dateKey] = day;
   persistFitnessDays();
   renderFitness();
@@ -2502,9 +2641,17 @@ function renderFitnessHistory() {
   const days = Object.values(fitnessState.days).map((day) => normalizeFitnessDay(day, day.date)).sort((a, b) => b.date.localeCompare(a.date));
   const last7 = days.slice(0, 7);
   els.fitnessWeightTrend.textContent = formatAverage(last7.map((day) => day.weight).filter(Boolean), ' lb');
+  if (els.fitnessWeightTrendDetail) els.fitnessWeightTrendDetail.textContent = formatAverage(last7.map((day) => day.weight).filter(Boolean), ' lb');
   els.fitnessAvgSteps.textContent = formatAverage(last7.map((day) => day.steps).filter(Boolean), ' steps', true);
+  if (els.fitnessAvgStepsDetail) els.fitnessAvgStepsDetail.textContent = formatAverage(last7.map((day) => day.steps).filter(Boolean), ' steps', true);
   els.fitnessAvgSleep.textContent = formatAverage(last7.map((day) => day.sleep).filter(Boolean), ' hrs');
-  els.fitnessWorkoutStreak.textContent = calculateWorkoutStreak() + ' days';
+  if (els.fitnessAvgSleepDetail) els.fitnessAvgSleepDetail.textContent = formatAverage(last7.map((day) => day.sleep).filter(Boolean), ' hrs');
+  if (els.fitnessActiveAvg) els.fitnessActiveAvg.textContent = formatAverage(last7.map((day) => day.activeMinutes).filter(Boolean), ' min', true);
+  const streak = calculateWorkoutStreak() + ' days';
+  els.fitnessWorkoutStreak.textContent = streak;
+  if (els.fitnessWorkoutStreakDetail) els.fitnessWorkoutStreakDetail.textContent = streak;
+  if (els.fitnessHistoryDays) els.fitnessHistoryDays.textContent = String(days.length);
+  if (els.fitnessLastSaved) els.fitnessLastSaved.textContent = days[0] && days[0].updatedAt ? formatLastSaved(days[0].updatedAt) : 'No log yet';
   renderWeightTrendChart(days);
   els.fitnessHistoryList.innerHTML = '';
   if (!days.length) {
@@ -2515,7 +2662,7 @@ function renderFitnessHistory() {
     const totals = getFoodTotals(day);
     const card = document.createElement('div');
     card.className = 'entry';
-    card.innerHTML = '<div class="entry-top"><strong>' + escapeHtml(formatShortDate(day.date)) + '</strong><span class="mini">' + Number(day.weight || 0) + ' lb | ' + totals.calories + ' cal | ' + totals.protein + 'g protein | ' + Number(day.steps || 0).toLocaleString() + ' steps | ' + Number(day.sleep || 0) + 'h sleep</span></div>';
+    card.innerHTML = '<div class="entry-top"><strong>' + escapeHtml(formatShortDate(day.date)) + '</strong><span class="mini">' + Number(day.weight || 0) + ' lb | ' + totals.calories + ' cal | ' + totals.protein + 'g protein | ' + Number(day.steps || 0).toLocaleString() + ' steps | ' + Number(day.sleep || 0) + 'h sleep</span><span class="mini">' + escapeHtml(day.updatedAt ? ('Saved ' + formatLastSaved(day.updatedAt)) : 'Saved locally') + '</span></div>';
     els.fitnessHistoryList.appendChild(card);
   });
 }
@@ -2695,6 +2842,24 @@ function formatAverage(values, suffix, roundWhole) {
   }
   const avg = values.reduce((sum, value) => sum + Number(value || 0), 0) / values.length;
   return (roundWhole ? Math.round(avg).toLocaleString() : avg.toFixed(1)) + suffix;
+}
+
+function formatLastSaved(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return 'recently';
+  }
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+}
+
+function extractSetCount(setText) {
+  const match = String(setText || '').match(/(\d+)\s*x/i);
+  return match ? Number(match[1]) : 1;
 }
 
 function persistFitnessDays() {

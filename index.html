@@ -577,29 +577,40 @@
         <div id="fitnessStatusBox" class="status"></div>
 
         <div class="fitness-panel" id="fitnessTodayPanel">
-          <div class="school-summary-grid compact-fitness-grid">
-            <div class="overview-item readiness-card">
+          <div class="fitness-overview-grid">
+            <div class="overview-item readiness-card fitness-stat-card">
               <strong id="fitnessReadinessScore">--</strong>
               <span>Readiness score</span>
             </div>
-            <div class="overview-item">
-              <strong id="fitnessProteinProgress">0 / 0g</strong>
-              <span>Protein today</span>
+            <div class="overview-item fitness-stat-card">
+              <strong id="fitnessWeeklyScore">--</strong>
+              <span id="fitnessWeeklyScoreLabel">Weekly fitness score</span>
             </div>
-            <div class="overview-item">
-              <strong id="fitnessCaloriesProgress">0 / 0</strong>
-              <span>Calories today</span>
+            <div class="overview-item fitness-stat-card">
+              <strong id="fitnessWorkoutStreak">0 days</strong>
+              <span>Workout streak</span>
             </div>
-            <div class="overview-item">
-              <strong id="fitnessStepsProgress">0 steps</strong>
-              <span>Movement today</span>
+            <div class="overview-item fitness-stat-card">
+              <strong id="fitnessAvgSleep">0 hrs</strong>
+              <span>7-day avg sleep</span>
             </div>
           </div>
 
-          <div class="target-strip" aria-label="Fitness targets">
-            <span id="fitnessWaterTarget">Water goal: -- cups</span>
-            <span id="fitnessSleepTarget">Sleep goal: -- hrs</span>
-            <span id="fitnessWorkoutTarget">Workout goal: --/week</span>
+          <div class="fitness-routine-shell section-gap">
+            <div class="fitness-routine-hero">
+              <div class="fitness-routine-copy">
+                <p class="eyebrow">Today’s routine</p>
+                <h3 id="fitnessTodayWorkoutTitle">Today workout</h3>
+                <p class="mini" id="fitnessTodayWorkoutFocus">Loading plan...</p>
+                <div class="fitness-routine-meta" id="fitnessRoutineMeta"></div>
+              </div>
+              <div class="fitness-muscle-card">
+                <div class="fitness-muscle-map" id="fitnessMuscleMap"></div>
+                <p class="mini">Muscle focus for today</p>
+              </div>
+            </div>
+
+            <div class="fitness-week-strip" id="fitnessWeekPlan"></div>
           </div>
 
           <div class="fitness-coach-card section-gap">
@@ -611,18 +622,49 @@
             <div class="coach-note" id="fitnessDailyFocus">First: type your weight, water, steps, and sleep. Then press Save daily log.</div>
           </div>
 
-          <div class="school-summary-grid two-up section-gap fitness-command-grid">
-            <div class="overview-item fitness-score-card">
-              <strong id="fitnessWeeklyScore">--</strong>
-              <span id="fitnessWeeklyScoreLabel">Weekly fitness score</span>
-            </div>
-            <div class="overview-item">
-              <strong id="fitnessTodayWorkoutTitle">Today workout</strong>
-              <span id="fitnessTodayWorkoutFocus">Loading plan...</span>
+          <div class="fitness-dashboard-grid section-gap">
+            <div class="control-box workout-card" id="fitnessWorkoutPlan"></div>
+
+            <div class="fitness-side-stack">
+              <div class="control-box fitness-goal-card">
+                <div class="compact-title-row">
+                  <h3>Today’s targets</h3>
+                  <span class="mini">Live progress</span>
+                </div>
+                <div class="fitness-goal-list">
+                  <div class="fitness-goal-row">
+                    <span>Protein</span>
+                    <strong id="fitnessProteinProgress">0 / 0g</strong>
+                  </div>
+                  <div class="fitness-goal-row">
+                    <span>Calories</span>
+                    <strong id="fitnessCaloriesProgress">0 / 0</strong>
+                  </div>
+                  <div class="fitness-goal-row">
+                    <span>Movement</span>
+                    <strong id="fitnessStepsProgress">0 steps</strong>
+                  </div>
+                  <div class="fitness-goal-row">
+                    <span id="fitnessWaterTarget">Water goal: -- cups</span>
+                    <span id="fitnessSleepTarget">Sleep goal: -- hrs</span>
+                  </div>
+                  <div class="fitness-goal-row">
+                    <span id="fitnessWorkoutTarget">Workout goal: --/week</span>
+                    <span id="fitnessAvgSteps">0 steps</span>
+                  </div>
+                </div>
+                <div class="fitness-mini-chart" id="fitnessMacroChart"></div>
+              </div>
+
+              <div class="control-box fitness-graph-card">
+                <div class="compact-title-row">
+                  <h3>Consistency</h3>
+                  <span class="mini">Last 7 days</span>
+                </div>
+                <div class="fitness-mini-chart" id="fitnessConsistencyChart"></div>
+              </div>
             </div>
           </div>
-
-          <div class="control-box section-gap workout-card" id="fitnessWorkoutPlan"></div>
 
           <details class="control-box section-gap compact-details checklist-details">
             <summary>Morning checklist: do these after you wake up</summary>
@@ -721,34 +763,64 @@
             <div class="entries compact-entries" id="fitnessFoodList"></div>
           </div>
 
-          <details class="control-box section-gap compact-details compact-history" id="fitnessHistoryPanel">
-            <summary>History and trends</summary>
-            <div class="weight-chart-wrap section-gap">
+          <div class="fitness-trends-grid section-gap">
+            <div class="control-box compact-history">
               <div class="compact-title-row">
                 <h3>Weight trend</h3>
                 <span class="mini" id="fitnessWeightTrendSummary">Log weight to start the graph.</span>
               </div>
               <div class="weight-chart" id="fitnessWeightChart"></div>
+              <div class="school-summary-grid compact-fitness-grid section-gap">
+                <div class="overview-item">
+                  <strong id="fitnessWeightTrend">--</strong>
+                  <span>7-day avg weight</span>
+                </div>
+                <div class="overview-item">
+                  <strong id="fitnessActiveAvg">0 min</strong>
+                  <span>7-day avg active min</span>
+                </div>
+              </div>
             </div>
+
+            <div class="control-box compact-history" id="fitnessHistoryPanel">
+              <div class="compact-title-row">
+                <h3>Saved history</h3>
+                <span class="mini">Recent check-ins and meals</span>
+              </div>
+              <div class="school-summary-grid compact-fitness-grid section-gap">
+                <div class="overview-item">
+                  <strong id="fitnessHistoryDays">0</strong>
+                  <span>Saved day logs</span>
+                </div>
+                <div class="overview-item">
+                  <strong id="fitnessLastSaved">No log yet</strong>
+                  <span>Most recent save</span>
+                </div>
+              </div>
+              <div class="entries section-gap compact-entries" id="fitnessHistoryList"></div>
+            </div>
+          </div>
+
+          <details class="control-box section-gap compact-details">
+            <summary>All trend details</summary>
             <div class="school-summary-grid compact-fitness-grid section-gap">
               <div class="overview-item">
-                <strong id="fitnessWeightTrend">--</strong>
+                <strong id="fitnessWeightTrendDetail">--</strong>
                 <span>7-day avg weight</span>
               </div>
               <div class="overview-item">
-                <strong id="fitnessWorkoutStreak">0 days</strong>
-                <span>Workout streak</span>
-              </div>
-              <div class="overview-item">
-                <strong id="fitnessAvgSteps">0 steps</strong>
+                <strong id="fitnessAvgStepsDetail">0 steps</strong>
                 <span>7-day avg steps</span>
               </div>
               <div class="overview-item">
-                <strong id="fitnessAvgSleep">0 hrs</strong>
+                <strong id="fitnessAvgSleepDetail">0 hrs</strong>
                 <span>7-day avg sleep</span>
               </div>
+              <div class="overview-item">
+                <strong id="fitnessWorkoutStreakDetail">0 days</strong>
+                <span>Workout streak</span>
+              </div>
             </div>
-            <div class="entries section-gap compact-entries" id="fitnessHistoryList"></div>
           </details>
         </div>
       </section>
