@@ -171,6 +171,7 @@ const dashboardTiles = Array.from(document.querySelectorAll('.dashboard-tile'));
 const fitnessTabs = Array.from(document.querySelectorAll('.fitness-tab'));
 const foodPresetButtons = Array.from(document.querySelectorAll('.food-preset'));
 const fitnessQuickButtons = Array.from(document.querySelectorAll('.fitness-quick'));
+const overlaySectionIds = ['dsgSection', 'schoolSection', 'calendarSection', 'fitnessSection'];
 
 const els = {
   appCard: document.getElementById('appCard'),
@@ -258,7 +259,11 @@ const els = {
   calendarWeek: document.getElementById('calendarWeek'),
   schoolSection: document.getElementById('schoolSection'),
   calendarSection: document.getElementById('calendarSection'),
+  dsgSection: document.getElementById('dsgSection'),
   fitnessSection: document.getElementById('fitnessSection'),
+  closeDsgBtn: document.getElementById('closeDsgBtn'),
+  closeSchoolBtn: document.getElementById('closeSchoolBtn'),
+  closeCalendarBtn: document.getElementById('closeCalendarBtn'),
   closeFitnessBtn: document.getElementById('closeFitnessBtn'),
   fitnessStatusBox: document.getElementById('fitnessStatusBox'),
   fitnessDate: document.getElementById('fitnessDate'),
@@ -383,11 +388,11 @@ function wireButtons() {
   dashboardTiles.forEach((tile) => {
     tile.addEventListener('click', () => {
       const targetId = tile.getAttribute('data-target');
-      if (targetId === 'fitnessSection') {
-        openFitnessSection();
+      if (overlaySectionIds.includes(targetId)) {
+        openOverlaySection(targetId);
         return;
       }
-      closeFitnessSection();
+      closeOverlaySections();
       const target = document.getElementById(targetId);
       if (target) {
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -415,6 +420,9 @@ function wireButtons() {
   if (els.saveTestRuleBtn) els.saveTestRuleBtn.addEventListener('click', saveCustomTestRule);
   if (els.clearTestRulesBtn) els.clearTestRulesBtn.addEventListener('click', clearCustomTestRules);
   if (els.canvasInboxRefreshBtn) els.canvasInboxRefreshBtn.addEventListener('click', loadCanvasInboxSummary);
+  if (els.closeDsgBtn) els.closeDsgBtn.addEventListener('click', closeOverlaySections);
+  if (els.closeSchoolBtn) els.closeSchoolBtn.addEventListener('click', closeOverlaySections);
+  if (els.closeCalendarBtn) els.closeCalendarBtn.addEventListener('click', closeOverlaySections);
   if (els.closeFitnessBtn) els.closeFitnessBtn.addEventListener('click', closeFitnessSection);
   if (els.saveFitnessDayBtn) els.saveFitnessDayBtn.addEventListener('click', saveFitnessDay);
   if (els.saveFitnessProfileBtn) els.saveFitnessProfileBtn.addEventListener('click', saveFitnessProfile);
@@ -425,7 +433,7 @@ function wireButtons() {
   fitnessQuickButtons.forEach((button) => button.addEventListener('click', () => applyFitnessQuickLog(button)));
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
-      closeFitnessSection();
+      closeOverlaySections();
     }
   });
 }
@@ -503,20 +511,37 @@ function render(state) {
   }
 }
 
-function openFitnessSection() {
-  document.body.classList.add('fitness-screen-open');
-  if (els.fitnessSection) {
-    els.fitnessSection.setAttribute('aria-hidden', 'false');
-    els.fitnessSection.scrollTop = 0;
-  }
+function openOverlaySection(sectionId) {
+  document.body.classList.add('screen-open');
+  overlaySectionIds.forEach((id) => {
+    const section = document.getElementById(id);
+    if (!section) return;
+    const isOpen = id === sectionId;
+    section.classList.toggle('is-open', isOpen);
+    section.setAttribute('aria-hidden', isOpen ? 'false' : 'true');
+    if (isOpen) {
+      section.scrollTop = 0;
+    }
+  });
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function closeOverlaySections() {
+  document.body.classList.remove('screen-open');
+  overlaySectionIds.forEach((id) => {
+    const section = document.getElementById(id);
+    if (!section) return;
+    section.classList.remove('is-open');
+    section.setAttribute('aria-hidden', 'true');
+  });
+}
+
+function openFitnessSection() {
+  openOverlaySection('fitnessSection');
+}
+
 function closeFitnessSection() {
-  document.body.classList.remove('fitness-screen-open');
-  if (els.fitnessSection) {
-    els.fitnessSection.setAttribute('aria-hidden', 'true');
-  }
+  closeOverlaySections();
 }
 
 function renderEntries(entries) {

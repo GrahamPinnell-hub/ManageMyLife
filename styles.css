@@ -632,15 +632,15 @@ button:disabled {
   gap: 14px;
 }
 
-.fitness-screen {
+.app-screen-section {
   display: none;
 }
 
-.fitness-screen-open {
+.screen-open {
   overflow: hidden;
 }
 
-.fitness-screen-open .fitness-screen {
+.screen-open .app-screen-section.is-open {
   display: grid;
   position: fixed;
   top: 10px;
@@ -801,7 +801,7 @@ select {
 }
 
 @media (max-width: 520px) {
-  .fitness-screen-open .fitness-screen {
+  .screen-open .app-screen-section.is-open {
     top: 0;
     width: 100vw;
     max-height: 100vh;
