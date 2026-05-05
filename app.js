@@ -2478,18 +2478,18 @@ function renderFitnessMuscleMap(workout) {
   const targets = getWorkoutMuscleTargets(workout);
   const fill = (name) => targets.includes(name) ? 'fitness-muscle-highlight' : 'fitness-muscle-base';
   els.fitnessMuscleMap.innerHTML =
-    '<svg viewBox="0 0 160 220" role="img" aria-label="Workout muscle focus">' +
-      '<circle class="' + fill('upper') + '" cx="80" cy="26" r="18"></circle>' +
-      '<rect class="' + fill('chest') + '" x="52" y="50" width="56" height="30" rx="12"></rect>' +
-      '<rect class="' + fill('core') + '" x="60" y="84" width="40" height="42" rx="12"></rect>' +
-      '<rect class="' + fill('shoulders') + '" x="34" y="50" width="16" height="32" rx="8"></rect>' +
-      '<rect class="' + fill('shoulders') + '" x="110" y="50" width="16" height="32" rx="8"></rect>' +
-      '<rect class="' + fill('arms') + '" x="22" y="74" width="16" height="58" rx="8"></rect>' +
-      '<rect class="' + fill('arms') + '" x="122" y="74" width="16" height="58" rx="8"></rect>' +
-      '<rect class="' + fill('legs') + '" x="56" y="132" width="18" height="68" rx="9"></rect>' +
-      '<rect class="' + fill('legs') + '" x="86" y="132" width="18" height="68" rx="9"></rect>' +
-      '<rect class="' + fill('back') + '" x="48" y="52" width="16" height="60" rx="8" opacity="0.92"></rect>' +
-      '<rect class="' + fill('back') + '" x="96" y="52" width="16" height="60" rx="8" opacity="0.92"></rect>' +
+    '<svg viewBox="0 0 170 280" role="img" aria-label="Workout muscle focus">' +
+      '<circle class="' + fill('upper') + '" cx="85" cy="34" r="22"></circle>' +
+      '<rect class="' + fill('shoulders') + '" x="61" y="62" width="48" height="40" rx="14"></rect>' +
+      '<rect class="' + fill('chest') + '" x="50" y="66" width="70" height="48" rx="18"></rect>' +
+      '<rect class="' + fill('back') + '" x="58" y="80" width="54" height="72" rx="18" opacity="0.96"></rect>' +
+      '<rect class="' + fill('arms') + '" x="29" y="72" width="18" height="58" rx="9"></rect>' +
+      '<rect class="' + fill('arms') + '" x="123" y="72" width="18" height="58" rx="9"></rect>' +
+      '<rect class="' + fill('arms') + '" x="17" y="96" width="18" height="90" rx="9"></rect>' +
+      '<rect class="' + fill('arms') + '" x="135" y="96" width="18" height="90" rx="9"></rect>' +
+      '<rect class="' + fill('core') + '" x="62" y="118" width="46" height="60" rx="16"></rect>' +
+      '<rect class="' + fill('legs') + '" x="57" y="182" width="22" height="88" rx="11"></rect>' +
+      '<rect class="' + fill('legs') + '" x="91" y="182" width="22" height="88" rx="11"></rect>' +
     '</svg>';
 }
 

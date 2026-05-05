@@ -632,6 +632,75 @@ button:disabled {
   gap: 14px;
 }
 
+#fitnessSection {
+  background:
+    radial-gradient(circle at top left, rgba(46, 208, 167, 0.12), transparent 26%),
+    linear-gradient(180deg, #0d1513 0%, #111b19 100%);
+  border-color: rgba(255, 255, 255, 0.06);
+  color: #f4faf7;
+}
+
+#fitnessSection .mini,
+#fitnessSection .notice,
+#fitnessSection .tile-copy,
+#fitnessSection .sub {
+  color: rgba(223, 236, 231, 0.72);
+}
+
+#fitnessSection .eyebrow {
+  color: #35d5b2;
+}
+
+#fitnessSection .overview-item,
+#fitnessSection .control-box,
+#fitnessSection .compact-details,
+#fitnessSection .toggle-row,
+#fitnessSection .workout-exercise-card,
+#fitnessSection .fitness-day-chip,
+#fitnessSection .entry {
+  background: #16211e;
+  border-color: rgba(255, 255, 255, 0.06);
+  color: #f4faf7;
+}
+
+#fitnessSection .entry .mini,
+#fitnessSection .overview-item span,
+#fitnessSection .compact-title-row .mini,
+#fitnessSection .compact-details summary,
+#fitnessSection .fitness-day-chip .mini,
+#fitnessSection .fitness-goal-row span {
+  color: rgba(223, 236, 231, 0.74);
+}
+
+#fitnessSection input,
+#fitnessSection textarea,
+#fitnessSection select {
+  background: #0f1715;
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #f4faf7;
+}
+
+#fitnessSection input::placeholder,
+#fitnessSection textarea::placeholder {
+  color: rgba(223, 236, 231, 0.45);
+}
+
+#fitnessSection .btn.primary {
+  background: linear-gradient(180deg, #31d2af 0%, #21b994 100%);
+  color: #05251d;
+}
+
+#fitnessSection .btn.secondary {
+  background: #203530;
+  color: #dff5ee;
+}
+
+#fitnessSection .btn.ghost {
+  background: #111917;
+  color: #f4faf7;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
 .app-screen-section {
   display: none;
 }
@@ -717,12 +786,13 @@ select {
 
 .fitness-overview-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
 
 .fitness-stat-card strong {
   font-size: 1.22rem;
+  letter-spacing: -0.02em;
 }
 
 .fitness-routine-shell,
@@ -740,17 +810,17 @@ select {
   display: grid;
   grid-template-columns: 1.2fr 0.8fr;
   gap: 12px;
-  padding: 16px;
-  border: 1px solid rgba(15, 108, 93, 0.14);
-  border-radius: 24px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 28px;
   background:
-    radial-gradient(circle at top left, rgba(15, 108, 93, 0.14), transparent 30%),
-    linear-gradient(135deg, #ffffff 0%, #f5fbf8 100%);
+    radial-gradient(circle at top left, rgba(46, 208, 167, 0.18), transparent 30%),
+    linear-gradient(180deg, #131d1b 0%, #172320 100%);
 }
 
 .fitness-routine-copy h3 {
   margin: 4px 0 6px;
-  font-size: 1.1rem;
+  font-size: 1.24rem;
 }
 
 .fitness-routine-meta {
@@ -759,9 +829,9 @@ select {
 
 .fitness-meta-pill {
   padding: 10px 12px;
-  border: 1px solid rgba(15, 108, 93, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 16px;
-  background: rgba(255,255,255,0.86);
+  background: rgba(255,255,255,0.04);
 }
 
 .fitness-meta-pill strong,
@@ -770,29 +840,44 @@ select {
   font-size: 0.95rem;
 }
 
+.fitness-meta-pill .mini {
+  color: rgba(223, 236, 231, 0.56);
+}
+
 .fitness-muscle-card {
   display: grid;
-  align-content: start;
+  align-content: space-between;
   justify-items: center;
-  gap: 8px;
-  padding: 14px;
-  border-radius: 22px;
-  background: #0e1715;
+  gap: 12px;
+  min-height: 360px;
+  padding: 20px 16px;
+  border-radius: 30px;
+  background: linear-gradient(180deg, #0a1211 0%, #0f1715 100%);
   color: #f8fdfb;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+.fitness-muscle-card .mini {
+  width: 100%;
+  margin-top: auto;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  color: #b39a7f !important;
+  text-align: left;
 }
 
 .fitness-muscle-map svg {
   width: 100%;
-  max-width: 180px;
+  max-width: 170px;
   height: auto;
 }
 
 .fitness-muscle-base {
-  fill: #253330;
+  fill: #2b3734;
 }
 
 .fitness-muscle-highlight {
-  fill: #2ed0a7;
+  fill: #35d5b2;
 }
 
 .fitness-week-strip {
@@ -801,17 +886,18 @@ select {
 
 .fitness-day-chip {
   padding: 10px 8px;
-  border-radius: 18px;
-  border: 1px solid var(--border);
-  background: white;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.05);
+  background: #15201d;
   text-align: center;
   min-height: 90px;
 }
 
 .fitness-day-chip.active {
-  background: linear-gradient(180deg, #0f6c5d 0%, #15756a 100%);
+  background: linear-gradient(180deg, #243430 0%, #172320 100%);
   color: white;
   border-color: transparent;
+  box-shadow: inset 0 0 0 2px rgba(53, 213, 178, 0.4);
 }
 
 .fitness-day-chip.done {
@@ -833,7 +919,7 @@ select {
   justify-content: space-between;
   gap: 10px;
   padding: 10px 0;
-  border-bottom: 1px solid rgba(23, 20, 18, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .fitness-goal-row:last-child {
@@ -842,6 +928,12 @@ select {
 
 .fitness-goal-row strong {
   font-size: 0.92rem;
+}
+
+#fitnessSection h2,
+#fitnessSection h3,
+#fitnessSection strong {
+  letter-spacing: -0.02em;
 }
 
 .fitness-mini-chart {
@@ -854,25 +946,25 @@ select {
 }
 
 .bar-bg {
-  fill: #e8f2ee;
+  fill: #22312d;
 }
 
 .bar-fill {
-  fill: #0f6c5d;
+  fill: #35d5b2;
 }
 
 .bar-fill.alt {
-  fill: #2ed0a7;
+  fill: #179f82;
 }
 
 .chart-label {
-  fill: #675e55;
+  fill: rgba(223, 236, 231, 0.68);
   font-size: 12px;
   font-family: Arial, Helvetica, sans-serif;
 }
 
 .chart-value {
-  fill: #171412;
+  fill: #f4faf7;
   font-size: 12px;
   font-weight: 700;
   font-family: Arial, Helvetica, sans-serif;
@@ -885,9 +977,9 @@ select {
 }
 
 .workout-exercise-card {
-  border: 1px solid rgba(23, 20, 18, 0.1);
-  border-radius: 18px;
-  background: white;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  background: #101816;
   padding: 12px;
   display: grid;
   gap: 8px;
@@ -913,8 +1005,8 @@ select {
 .set-chip {
   padding: 6px 10px;
   border-radius: 999px;
-  background: #edf7f3;
-  color: #0b564b;
+  background: #1a2a26;
+  color: #8be8d1;
   font-weight: 700;
   font-size: 0.78rem;
 }
@@ -923,9 +1015,9 @@ select {
   min-height: 96px;
   display: grid;
   place-items: center;
-  border: 1px dashed rgba(23, 20, 18, 0.16);
+  border: 1px dashed rgba(255, 255, 255, 0.14);
   border-radius: 16px;
-  color: var(--muted);
+  color: rgba(223, 236, 231, 0.6);
   font-size: 0.8rem;
   text-align: center;
   padding: 12px;
@@ -1020,6 +1112,29 @@ select {
   font-size: 1rem;
 }
 
+#fitnessSection .weight-chart {
+  border-color: rgba(255, 255, 255, 0.06);
+  background:
+    linear-gradient(rgba(53, 213, 178, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(53, 213, 178, 0.08) 1px, transparent 1px),
+    #101816;
+  background-size: 100% 33%, 25% 100%, auto;
+}
+
+#fitnessSection .weight-chart polyline {
+  stroke: #35d5b2;
+}
+
+#fitnessSection .weight-chart circle {
+  fill: #9cf2dd;
+  stroke: #0d1513;
+}
+
+#fitnessSection .coach-note {
+  background: linear-gradient(180deg, #1d2c29 0%, #14211e 100%);
+  color: #f4faf7;
+}
+
 @media (max-width: 520px) {
   .fitness-overview-grid,
   .fitness-routine-meta,
@@ -1027,6 +1142,10 @@ select {
   .fitness-routine-hero,
   .fitness-trends-grid {
     grid-template-columns: 1fr;
+  }
+
+  .fitness-overview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .fitness-week-strip {
