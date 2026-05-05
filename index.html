@@ -37,7 +37,7 @@
         <div class="section-head">
           <div>
             <h2>Life areas</h2>
-            <p class="mini">Tap a section card to jump down to it.</p>
+            <p class="mini">Tap a section card to open it.</p>
           </div>
         </div>
         <div class="dashboard-grid">
@@ -69,7 +69,7 @@
           <button class="dashboard-tile active" type="button" data-target="fitnessSection">
             <span class="tile-kicker">Live now</span>
             <strong>Fitness tracker</strong>
-            <span class="tile-copy">Food, protein, steps, heart rate, sleep, workouts, and readiness.</span>
+            <span class="tile-copy">Opens in its own private screen for food, protein, steps, sleep, workouts, and readiness.</span>
           </button>
           <button class="dashboard-tile" type="button" data-target="prayerSection">
             <span class="tile-kicker">Tomorrow</span>
@@ -305,6 +305,70 @@
           <p class="notice">Most reliable option: tap Add Google reminders on a test. That creates a real Google Calendar event with reminder popups.</p>
         </div>
 
+        <div class="control-box inbox-box section-gap">
+          <div class="section-head compact-head">
+            <div>
+              <p class="eyebrow">Secure summary</p>
+              <h3>Canvas inbox triage</h3>
+              <p class="mini">This section never talks to Canvas directly. It only shows the cleaned summary pushed from your own computer through Apps Script.</p>
+            </div>
+          </div>
+
+          <div class="button-stack">
+            <button class="btn ghost" id="canvasInboxRefreshBtn" type="button">Refresh inbox summary</button>
+          </div>
+
+          <div class="school-summary-grid">
+            <div class="overview-item urgency-card normal">
+              <strong id="canvasInboxMessageCount">0 messages</strong>
+              <span>Latest triaged inbox count</span>
+            </div>
+            <div class="overview-item urgency-card today">
+              <strong id="canvasInboxUnreadCount">0 unread</strong>
+              <span>Unread items in the saved summary</span>
+            </div>
+            <div class="overview-item urgency-card week">
+              <strong id="canvasInboxImportantCount">0 important</strong>
+              <span>Items ranked most important</span>
+            </div>
+          </div>
+
+          <div class="overview-item">
+            <strong id="canvasInboxLastUpdated">No inbox summary yet.</strong>
+            <span>Updated by your local computer script, not by the browser.</span>
+          </div>
+
+          <div class="school-block">
+            <div class="section-head compact-head">
+              <div>
+                <h3>Most Important</h3>
+                <p class="mini">Unread, urgent, counselor/teacher/admin, and deadline-heavy messages float here.</p>
+              </div>
+            </div>
+            <div class="entries compact-entries" id="canvasInboxMostImportant"></div>
+          </div>
+
+          <div class="school-block">
+            <div class="section-head compact-head">
+              <div>
+                <h3>Reply Soon</h3>
+                <p class="mini">Important enough to respond, but not top-priority urgent.</p>
+              </div>
+            </div>
+            <div class="entries compact-entries" id="canvasInboxReplySoon"></div>
+          </div>
+
+          <div class="school-block">
+            <div class="section-head compact-head">
+              <div>
+                <h3>FYI</h3>
+                <p class="mini">Low urgency messages that still matter for context.</p>
+              </div>
+            </div>
+            <div class="entries compact-entries" id="canvasInboxFyi"></div>
+          </div>
+        </div>
+
         <div class="stack section-gap">
           <label class="field">Canvas base URL
             <input id="canvasBaseUrl" type="url" placeholder="https://your-school.instructure.com">
@@ -535,12 +599,15 @@
         <p class="mini">We can add repeat chores, quick check-off buttons, and who owns what.</p>
       </section>
 
-      <section class="card" id="fitnessSection">
+      <section class="card fitness-screen" id="fitnessSection" aria-hidden="true">
         <div class="section-head">
-          <div>
-            <p class="eyebrow">Live now</p>
-            <h2>Fitness tracker</h2>
-            <p class="mini">A private daily tracker for food, protein, water, steps, sleep, heart rate, workouts, mood, and trends.</p>
+          <div class="screen-head">
+            <div>
+              <p class="eyebrow">Live now</p>
+              <h2>Fitness tracker</h2>
+              <p class="mini">A private daily tracker for food, protein, water, steps, sleep, heart rate, workouts, mood, and trends.</p>
+            </div>
+            <button class="btn ghost screen-close-btn" id="closeFitnessBtn" type="button">Back to dashboard</button>
           </div>
         </div>
 

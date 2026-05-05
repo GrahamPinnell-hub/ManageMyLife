@@ -215,6 +215,14 @@ const els = {
   testRuleLabel: document.getElementById('testRuleLabel'),
   saveTestRuleBtn: document.getElementById('saveTestRuleBtn'),
   clearTestRulesBtn: document.getElementById('clearTestRulesBtn'),
+  canvasInboxRefreshBtn: document.getElementById('canvasInboxRefreshBtn'),
+  canvasInboxLastUpdated: document.getElementById('canvasInboxLastUpdated'),
+  canvasInboxMessageCount: document.getElementById('canvasInboxMessageCount'),
+  canvasInboxUnreadCount: document.getElementById('canvasInboxUnreadCount'),
+  canvasInboxImportantCount: document.getElementById('canvasInboxImportantCount'),
+  canvasInboxMostImportant: document.getElementById('canvasInboxMostImportant'),
+  canvasInboxReplySoon: document.getElementById('canvasInboxReplySoon'),
+  canvasInboxFyi: document.getElementById('canvasInboxFyi'),
   canvasAssignmentCount: document.getElementById('canvasAssignmentCount'),
   canvasClassCount: document.getElementById('canvasClassCount'),
   canvasOverdueCount: document.getElementById('canvasOverdueCount'),
@@ -250,6 +258,8 @@ const els = {
   calendarWeek: document.getElementById('calendarWeek'),
   schoolSection: document.getElementById('schoolSection'),
   calendarSection: document.getElementById('calendarSection'),
+  fitnessSection: document.getElementById('fitnessSection'),
+  closeFitnessBtn: document.getElementById('closeFitnessBtn'),
   fitnessStatusBox: document.getElementById('fitnessStatusBox'),
   fitnessDate: document.getElementById('fitnessDate'),
   fitnessWeight: document.getElementById('fitnessWeight'),
@@ -327,6 +337,10 @@ const googleCalendarState = {
   calendarName: loadGoogleCalendarName()
 };
 
+const canvasInboxState = {
+  summary: createEmptyCanvasInboxSummary()
+};
+
 const dismissedAssignments = loadDismissedAssignments();
 const testNotificationState = {
   settings: loadTestNotificationSettings(),
@@ -347,8 +361,10 @@ function init() {
   renderCanvasAssignments();
   renderEdgenuityAssignments();
   renderCalendarView();
+  renderCanvasInboxSummary(canvasInboxState.summary);
   initFitness();
   initTestNotifications();
+  loadCanvasInboxSummary();
   els.date.value = todayValue();
   setHours(1);
   setActivity('Sunday school service');
@@ -367,6 +383,11 @@ function wireButtons() {
   dashboardTiles.forEach((tile) => {
     tile.addEventListener('click', () => {
       const targetId = tile.getAttribute('data-target');
+      if (targetId === 'fitnessSection') {
+        openFitnessSection();
+        return;
+      }
+      closeFitnessSection();
       const target = document.getElementById(targetId);
       if (target) {
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -393,6 +414,8 @@ function wireButtons() {
   if (els.sendTestNotificationBtn) els.sendTestNotificationBtn.addEventListener('click', sendManualTestNotification);
   if (els.saveTestRuleBtn) els.saveTestRuleBtn.addEventListener('click', saveCustomTestRule);
   if (els.clearTestRulesBtn) els.clearTestRulesBtn.addEventListener('click', clearCustomTestRules);
+  if (els.canvasInboxRefreshBtn) els.canvasInboxRefreshBtn.addEventListener('click', loadCanvasInboxSummary);
+  if (els.closeFitnessBtn) els.closeFitnessBtn.addEventListener('click', closeFitnessSection);
   if (els.saveFitnessDayBtn) els.saveFitnessDayBtn.addEventListener('click', saveFitnessDay);
   if (els.saveFitnessProfileBtn) els.saveFitnessProfileBtn.addEventListener('click', saveFitnessProfile);
   if (els.suggestFitnessGoalsBtn) els.suggestFitnessGoalsBtn.addEventListener('click', suggestFitnessGoals);
@@ -400,6 +423,11 @@ function wireButtons() {
   fitnessTabs.forEach((button) => button.addEventListener('click', () => showFitnessTab(button.getAttribute('data-fitness-tab'))));
   foodPresetButtons.forEach((button) => button.addEventListener('click', () => applyFoodPreset(button)));
   fitnessQuickButtons.forEach((button) => button.addEventListener('click', () => applyFitnessQuickLog(button)));
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeFitnessSection();
+    }
+  });
 }
 
 
@@ -475,6 +503,22 @@ function render(state) {
   }
 }
 
+function openFitnessSection() {
+  document.body.classList.add('fitness-screen-open');
+  if (els.fitnessSection) {
+    els.fitnessSection.setAttribute('aria-hidden', 'false');
+    els.fitnessSection.scrollTop = 0;
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function closeFitnessSection() {
+  document.body.classList.remove('fitness-screen-open');
+  if (els.fitnessSection) {
+    els.fitnessSection.setAttribute('aria-hidden', 'true');
+  }
+}
+
 function renderEntries(entries) {
   els.entries.innerHTML = '';
   if (!entries.length) {
@@ -493,6 +537,120 @@ function renderEntries(entries) {
     button.addEventListener('click', () => deleteEntry(entry.id));
     card.appendChild(button);
     els.entries.appendChild(card);
+  });
+}
+
+
+function createEmptyCanvasInboxSummary() {
+  return {
+    source: 'canvas-inbox-sync',
+    generatedAt: '',
+    updatedAt: '',
+    counts: {
+      totalMessages: 0,
+      unreadMessages: 0,
+      importantMessages: 0
+    },
+    sections: {
+      mostImportant: [],
+      replySoon: [],
+      fyi: []
+    }
+  };
+}
+
+async function loadCanvasInboxSummary() {
+  try {
+    const summary = await apiRequest('getCanvasInboxSummary');
+    canvasInboxState.summary = summary || createEmptyCanvasInboxSummary();
+    renderCanvasInboxSummary(canvasInboxState.summary);
+  } catch (error) {
+    renderCanvasInboxSummary(canvasInboxState.summary || createEmptyCanvasInboxSummary());
+  }
+}
+
+function renderCanvasInboxSummary(summary) {
+  const data = summary || createEmptyCanvasInboxSummary();
+  const counts = data.counts || {};
+  const sections = data.sections || {};
+
+  if (els.canvasInboxMessageCount) {
+    els.canvasInboxMessageCount.textContent = safeCountLabel(counts.totalMessages, 'message');
+  }
+  if (els.canvasInboxUnreadCount) {
+    els.canvasInboxUnreadCount.textContent = safeCountLabel(counts.unreadMessages, 'unread');
+  }
+  if (els.canvasInboxImportantCount) {
+    els.canvasInboxImportantCount.textContent = safeCountLabel(counts.importantMessages, 'important');
+  }
+  if (els.canvasInboxLastUpdated) {
+    els.canvasInboxLastUpdated.textContent = data.updatedAt ? 'Last updated ' + formatUpdatedAt(data.updatedAt) : 'No inbox summary yet. Run the local sync script on your computer.';
+  }
+
+  renderCanvasInboxCategory(els.canvasInboxMostImportant, sections.mostImportant || [], 'No urgent Canvas inbox items right now.');
+  renderCanvasInboxCategory(els.canvasInboxReplySoon, sections.replySoon || [], 'Nothing currently waiting in Reply Soon.');
+  renderCanvasInboxCategory(els.canvasInboxFyi, sections.fyi || [], 'No FYI messages saved yet.');
+}
+
+function renderCanvasInboxCategory(container, items, emptyMessage) {
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = '';
+  if (!items.length) {
+    container.innerHTML = '<div class="entry assignment-card"><div class="entry-top"><strong>' + escapeHtml(emptyMessage) + '</strong><span class="mini">The app only shows the cleaned summary from Apps Script.</span></div></div>';
+    return;
+  }
+
+  items.forEach((item) => {
+    container.appendChild(buildCanvasInboxCard(item));
+  });
+}
+
+function buildCanvasInboxCard(item) {
+  const card = document.createElement('div');
+  card.className = 'entry assignment-card inbox-card';
+
+  const top = document.createElement('div');
+  top.className = 'entry-top';
+  top.innerHTML =
+    '<span class="assignment-tag week">' + escapeHtml(item.category || 'Inbox') + '</span>' +
+    '<strong>' + escapeHtml(item.subject || '(No subject)') + '</strong>' +
+    '<span class="assignment-meta">From ' + escapeHtml(item.sender || 'Unknown sender') + '</span>' +
+    '<span class="assignment-meta">Score ' + Number(item.importanceScore || 0) + (item.context ? ' | ' + escapeHtml(item.context) : '') + (item.receivedAt ? ' | ' + escapeHtml(formatDueDate(item.receivedAt)) : '') + '</span>';
+  card.appendChild(top);
+
+  const preview = document.createElement('p');
+  preview.className = 'mini inbox-preview';
+  preview.textContent = item.preview || 'No preview saved.';
+  card.appendChild(preview);
+
+  if (item.reason) {
+    const reason = document.createElement('span');
+    reason.className = 'assignment-meta';
+    reason.textContent = 'Why it ranked here: ' + item.reason;
+    card.appendChild(reason);
+  }
+
+  return card;
+}
+
+function safeCountLabel(value, noun) {
+  const count = Number(value || 0);
+  return count + ' ' + noun + (count === 1 ? '' : noun === 'unread' || noun === 'important' ? '' : 's');
+}
+
+function formatUpdatedAt(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return 'unknown time';
+  }
+  return date.toLocaleString('en-US', {
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
   });
 }
 
