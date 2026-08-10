@@ -372,7 +372,6 @@ const fitnessState = {
 };
 
 function init() {
-  applyDebugCalendarSeedIfRequested();
   wireButtons();
   fillCanvasSettings();
   fillEdgenuitySettings();
@@ -387,33 +386,6 @@ function init() {
   setHours(1);
   setActivity('Sunday school service');
   fetchState();
-}
-
-function applyDebugCalendarSeedIfRequested() {
-  if (window.location.hash !== '#debug-calendar') {
-    return;
-  }
-
-  canvasState.assignments = [{
-    id: 'canvas-debug-overdue-1',
-    name: '5/14 All Coursework Due',
-    dueAt: '2026-08-09T23:30:00.000Z',
-    courseName: '2(A) - U.S. History - Johnson - S2',
-    pointsPossible: 100,
-    htmlUrl: 'https://example.com/canvas-assignment',
-    openLabel: 'Open in Canvas'
-  }];
-  edgenuityState.assignments = [];
-  googleCalendarState.events = [];
-  Object.keys(dismissedAssignments).forEach((key) => delete dismissedAssignments[key]);
-  try {
-    localStorage.setItem(CANVAS_ASSIGNMENTS_KEY, JSON.stringify(canvasState.assignments));
-    localStorage.setItem(EDGENUITY_ASSIGNMENTS_KEY, JSON.stringify(edgenuityState.assignments));
-    localStorage.setItem(GOOGLE_CALENDAR_EVENTS_KEY, JSON.stringify(googleCalendarState.events));
-    localStorage.setItem(DISMISSED_ASSIGNMENTS_KEY, JSON.stringify(dismissedAssignments));
-  } catch (error) {
-    // Ignore debug seed persistence issues and continue with in-memory state.
-  }
 }
 
 function wireButtons() {
@@ -910,10 +882,26 @@ function collectCalendarItems() {
   }));
 
   const googleItems = (googleCalendarState.events || []).map(buildGoogleCalendarItem).filter((item) => !isDismissedAssignment(item));
+  const dedupedItems = dedupeCalendarItems(canvasItems.concat(edgenuityItems, googleItems));
 
-  return canvasItems.concat(edgenuityItems, googleItems)
+  return dedupedItems
     .filter((item) => item.start)
     .sort((a, b) => new Date(a.start) - new Date(b.start));
+}
+
+function dedupeCalendarItems(items) {
+  const seen = {};
+  const ordered = [];
+  items.forEach((item) => {
+    const key = buildCalendarDuplicateKey(item);
+    if (!key || !seen[key]) {
+      if (key) {
+        seen[key] = true;
+      }
+      ordered.push(item);
+    }
+  });
+  return ordered;
 }
 
 function renderCalendarList(container, items, emptyMessage) {
@@ -1680,21 +1668,29 @@ function getDismissKeys(assignment) {
   const source = String((assignment && assignment.source) || 'assignment');
   const keys = [];
   const seen = {};
+  const addFullKey = (fullKey) => {
+    const text = String(fullKey || '').trim();
+    if (!text || seen[text]) {
+      return;
+    }
+    seen[text] = true;
+    keys.push(text);
+  };
   const addKey = (baseId) => {
     const text = String(baseId || '').trim();
     if (!text) {
       return;
     }
-    const fullKey = source + '::' + text;
-    if (!seen[fullKey]) {
-      seen[fullKey] = true;
-      keys.push(fullKey);
-    }
+    addFullKey(source + '::' + text);
   };
 
   addKey(assignment && assignment.id);
   addKey(assignment && assignment.htmlUrl);
   addKey(((assignment && assignment.courseName) || '') + '|' + ((assignment && (assignment.name || assignment.title)) || '') + '|' + ((assignment && (assignment.dueAt || assignment.start)) || ''));
+  const sharedFingerprint = buildDismissSharedFingerprint(assignment);
+  if (sharedFingerprint) {
+    addFullKey('shared::' + sharedFingerprint);
+  }
   return keys;
 }
 
@@ -1706,7 +1702,11 @@ function requestDismissConfirmation(button, assignment) {
 
   if (button.dataset.confirming === '1') {
     resetDismissButton(button);
+    const card = button.closest('.assignment-card');
     dismissAssignment(assignment);
+    if (card && card.isConnected) {
+      card.remove();
+    }
     return;
   }
 
@@ -1829,6 +1829,31 @@ function buildGoogleCalendarItem(event) {
     htmlUrl: event.htmlUrl || 'https://calendar.google.com/calendar/u/0/r',
     openLabel: event.openLabel || 'Open Google Calendar'
   };
+}
+
+function buildCalendarDuplicateKey(item) {
+  const title = normalizeDismissText(item && (item.name || item.title));
+  const when = normalizeDismissText(item && (item.dueAt || item.start));
+  if (!title || !when) {
+    return '';
+  }
+  return title + '|' + when;
+}
+
+function buildDismissSharedFingerprint(assignment) {
+  const title = normalizeDismissText(assignment && (assignment.name || assignment.title));
+  const when = normalizeDismissText(assignment && (assignment.dueAt || assignment.start));
+  if (!title || !when) {
+    return '';
+  }
+  return title + '|' + when;
+}
+
+function normalizeDismissText(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
 }
 
 function deriveGoogleCalendarSourceLabel(event, calendarName) {
