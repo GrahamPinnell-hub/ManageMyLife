@@ -1626,7 +1626,7 @@ function dismissAssignment(assignment) {
   renderCanvasAssignments();
   renderEdgenuityAssignments();
   renderCalendarView();
-  showSchoolStatus('Assignment dismissed on this device.');
+  showDismissStatus('Item dismissed on this device.');
   refreshTestNotificationStatus();
 }
 
@@ -1678,7 +1678,7 @@ function requestDismissConfirmation(button, assignment) {
   button.textContent = 'Tap again';
   button.classList.add('confirming');
   const label = assignment.name || assignment.title || 'this item';
-  showSchoolStatus('Tap Dismiss again to hide "' + label + '".');
+  showDismissStatus('Tap Dismiss again to hide "' + label + '".');
   button.dismissResetTimer = window.setTimeout(() => {
     resetDismissButton(button);
   }, 2600);
@@ -1699,6 +1699,11 @@ function resetDismissButton(button) {
 
 function resetAllDismissButtons() {
   Array.from(document.querySelectorAll('.dismiss-btn.confirming')).forEach((button) => resetDismissButton(button));
+}
+
+function showDismissStatus(message) {
+  showSchoolStatus(message);
+  showCalendarStatus(message);
 }
 
 function renderCanvasAssignments() {
@@ -1887,7 +1892,7 @@ function buildAssignmentCard(assignment) {
     actionRow.appendChild(openLink);
   }
 
-  if (assignment.source === 'canvas' || assignment.source === 'edgenuity') {
+  if (assignment.source) {
     const dismissButton = document.createElement('button');
     dismissButton.type = 'button';
     dismissButton.className = 'btn ghost dismiss-btn';
