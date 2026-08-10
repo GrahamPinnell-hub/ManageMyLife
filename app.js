@@ -372,6 +372,7 @@ const fitnessState = {
 };
 
 function init() {
+  applyDebugCalendarSeedIfRequested();
   wireButtons();
   fillCanvasSettings();
   fillEdgenuitySettings();
@@ -386,6 +387,33 @@ function init() {
   setHours(1);
   setActivity('Sunday school service');
   fetchState();
+}
+
+function applyDebugCalendarSeedIfRequested() {
+  if (window.location.hash !== '#debug-calendar') {
+    return;
+  }
+
+  canvasState.assignments = [{
+    id: 'canvas-debug-overdue-1',
+    name: '5/14 All Coursework Due',
+    dueAt: '2026-08-09T23:30:00.000Z',
+    courseName: '2(A) - U.S. History - Johnson - S2',
+    pointsPossible: 100,
+    htmlUrl: 'https://example.com/canvas-assignment',
+    openLabel: 'Open in Canvas'
+  }];
+  edgenuityState.assignments = [];
+  googleCalendarState.events = [];
+  Object.keys(dismissedAssignments).forEach((key) => delete dismissedAssignments[key]);
+  try {
+    localStorage.setItem(CANVAS_ASSIGNMENTS_KEY, JSON.stringify(canvasState.assignments));
+    localStorage.setItem(EDGENUITY_ASSIGNMENTS_KEY, JSON.stringify(edgenuityState.assignments));
+    localStorage.setItem(GOOGLE_CALENDAR_EVENTS_KEY, JSON.stringify(googleCalendarState.events));
+    localStorage.setItem(DISMISSED_ASSIGNMENTS_KEY, JSON.stringify(dismissedAssignments));
+  } catch (error) {
+    // Ignore debug seed persistence issues and continue with in-memory state.
+  }
 }
 
 function wireButtons() {
