@@ -211,6 +211,30 @@
         <div id="schoolErrorBox" class="error"></div>
         <div id="schoolStatusBox" class="status"></div>
 
+        <div class="control-box dismiss-tools-box section-gap">
+          <div class="section-head compact-head">
+            <div>
+              <p class="eyebrow">Hide clutter</p>
+              <h3>Dismiss tools</h3>
+              <p class="mini">Hide wrong, excused, or already-done items on this device. You can undo or restore them later.</p>
+            </div>
+          </div>
+
+          <div class="button-stack dismiss-tool-actions">
+            <button class="btn ghost" id="undoDismissSchoolBtn" type="button">Undo last dismiss</button>
+            <button class="btn ghost dismiss-btn" id="dismissSchoolOverdueBtn" type="button">Dismiss all overdue</button>
+          </div>
+
+          <details class="compact-details dismiss-hidden-panel">
+            <summary>Hidden school items <span class="dismiss-count" id="schoolDismissedCount">0 items</span></summary>
+            <p class="mini">These are only hidden on this device.</p>
+            <div class="button-stack dismiss-tool-actions">
+              <button class="btn ghost" id="restoreSchoolDismissedBtn" type="button">Restore hidden school items</button>
+            </div>
+            <div class="entries compact-entries" id="schoolDismissedList"></div>
+          </details>
+        </div>
+
         <div class="control-box notification-box section-gap">
           <div class="section-head compact-head">
             <div>
@@ -507,6 +531,30 @@
 
         <div id="calendarErrorBox" class="error"></div>
         <div id="calendarStatusBox" class="status"></div>
+
+        <div class="control-box dismiss-tools-box section-gap">
+          <div class="section-head compact-head">
+            <div>
+              <p class="eyebrow">Hide clutter</p>
+              <h3>Dismiss tools</h3>
+              <p class="mini">Quickly hide overdue school items here too, then restore them later if needed.</p>
+            </div>
+          </div>
+
+          <div class="button-stack dismiss-tool-actions">
+            <button class="btn ghost" id="undoDismissCalendarBtn" type="button">Undo last dismiss</button>
+            <button class="btn ghost dismiss-btn" id="dismissCalendarOverdueBtn" type="button">Dismiss all overdue</button>
+          </div>
+
+          <details class="compact-details dismiss-hidden-panel">
+            <summary>Hidden calendar items <span class="dismiss-count" id="calendarDismissedCount">0 items</span></summary>
+            <p class="mini">This includes anything hidden from the calendar view on this device.</p>
+            <div class="button-stack dismiss-tool-actions">
+              <button class="btn ghost" id="restoreCalendarDismissedBtn" type="button">Restore hidden calendar items</button>
+            </div>
+            <div class="entries compact-entries" id="calendarDismissedList"></div>
+          </details>
+        </div>
 
         <div class="button-stack section-gap">
           <button class="btn secondary" id="rebuildCalendarBtn" type="button">Refresh school calendar</button>

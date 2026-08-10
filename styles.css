@@ -476,6 +476,32 @@ button:disabled {
   border-color: var(--danger);
 }
 
+.btn.confirming {
+  background: var(--ink);
+  color: #ffffff;
+  border-color: var(--ink);
+}
+
+.dismiss-tool-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dismiss-hidden-panel summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dismiss-count {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.dismissed-card {
+  background: rgba(255, 255, 255, 0.84);
+}
+
 .assignment-tag {
   display: inline-flex;
   align-items: center;
