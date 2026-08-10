@@ -470,6 +470,12 @@ button:disabled {
   border-color: rgba(158, 47, 47, 0.22);
 }
 
+.dismiss-btn.confirming {
+  background: var(--danger);
+  color: #ffffff;
+  border-color: var(--danger);
+}
+
 .assignment-tag {
   display: inline-flex;
   align-items: center;

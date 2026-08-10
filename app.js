@@ -1613,20 +1613,14 @@ function saveTestNotificationSent() {
 }
 
 function dismissAssignment(assignment) {
-  const assignmentId = getDismissKey(assignment);
+  const assignmentId = getPrimaryDismissKey(assignment);
   if (!assignmentId) {
-    return;
-  }
-
-  const label = assignment.name || assignment.title || 'this item';
-  const ok = window.confirm('Dismiss "' + label + '" from the app? You can bring it back later by clearing dismissed items in browser storage if needed.');
-  if (!ok) {
     return;
   }
 
   dismissedAssignments[assignmentId] = {
     dismissedAt: new Date().toISOString(),
-    title: label
+    title: assignment.name || assignment.title || 'this item'
   };
   localStorage.setItem(DISMISSED_ASSIGNMENTS_KEY, JSON.stringify(dismissedAssignments));
   renderCanvasAssignments();
@@ -1637,16 +1631,74 @@ function dismissAssignment(assignment) {
 }
 
 function isDismissedAssignment(assignment) {
-  const key = getDismissKey(assignment);
-  return !!(key && dismissedAssignments[key]);
+  return getDismissKeys(assignment).some((key) => !!dismissedAssignments[key]);
 }
 
-function getDismissKey(assignment) {
-  const baseId = assignment.id || assignment.htmlUrl || ((assignment.courseName || '') + '|' + (assignment.name || assignment.title || '') + '|' + (assignment.dueAt || assignment.start || ''));
-  if (!baseId) {
-    return '';
+function getPrimaryDismissKey(assignment) {
+  return getDismissKeys(assignment)[0] || '';
+}
+
+function getDismissKeys(assignment) {
+  const source = String((assignment && assignment.source) || 'assignment');
+  const keys = [];
+  const seen = {};
+  const addKey = (baseId) => {
+    const text = String(baseId || '').trim();
+    if (!text) {
+      return;
+    }
+    const fullKey = source + '::' + text;
+    if (!seen[fullKey]) {
+      seen[fullKey] = true;
+      keys.push(fullKey);
+    }
+  };
+
+  addKey(assignment && assignment.htmlUrl);
+  addKey(assignment && assignment.id);
+  addKey(((assignment && assignment.courseName) || '') + '|' + ((assignment && (assignment.name || assignment.title)) || '') + '|' + ((assignment && (assignment.dueAt || assignment.start)) || ''));
+  return keys;
+}
+
+function requestDismissConfirmation(button, assignment) {
+  if (!button) {
+    dismissAssignment(assignment);
+    return;
   }
-  return String(assignment.source || 'assignment') + '::' + String(baseId);
+
+  if (button.dataset.confirming === '1') {
+    resetDismissButton(button);
+    dismissAssignment(assignment);
+    return;
+  }
+
+  resetAllDismissButtons();
+  button.dataset.confirming = '1';
+  button.dataset.originalText = button.textContent;
+  button.textContent = 'Tap again';
+  button.classList.add('confirming');
+  const label = assignment.name || assignment.title || 'this item';
+  showSchoolStatus('Tap Dismiss again to hide "' + label + '".');
+  button.dismissResetTimer = window.setTimeout(() => {
+    resetDismissButton(button);
+  }, 2600);
+}
+
+function resetDismissButton(button) {
+  if (!button) {
+    return;
+  }
+  if (button.dismissResetTimer) {
+    window.clearTimeout(button.dismissResetTimer);
+    button.dismissResetTimer = null;
+  }
+  button.dataset.confirming = '0';
+  button.textContent = button.dataset.originalText || 'Dismiss';
+  button.classList.remove('confirming');
+}
+
+function resetAllDismissButtons() {
+  Array.from(document.querySelectorAll('.dismiss-btn.confirming')).forEach((button) => resetDismissButton(button));
 }
 
 function renderCanvasAssignments() {
@@ -1840,7 +1892,7 @@ function buildAssignmentCard(assignment) {
     dismissButton.type = 'button';
     dismissButton.className = 'btn ghost dismiss-btn';
     dismissButton.textContent = 'Dismiss';
-    dismissButton.addEventListener('click', () => dismissAssignment(assignment));
+    dismissButton.addEventListener('click', () => requestDismissConfirmation(dismissButton, assignment));
     actionRow.appendChild(dismissButton);
   }
 
