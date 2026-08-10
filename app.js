@@ -847,12 +847,16 @@ function renderCalendarView() {
 
 function collectCalendarItems() {
   const canvasItems = (canvasState.assignments || []).filter((assignment) => !isDismissedAssignment(assignment)).map((assignment) => ({
+    id: assignment.id || '',
+    name: assignment.name,
     title: assignment.name,
+    dueAt: assignment.dueAt,
     start: assignment.dueAt,
     source: 'canvas',
     courseName: assignment.courseName,
     unitName: assignment.unitName || '',
     lessonName: assignment.lessonName || '',
+    pointsPossible: assignment.pointsPossible,
     itemType: assignment.pointsPossible != null ? String(assignment.pointsPossible) + ' pts' : '',
     description: assignment.description || assignment.details || '',
     details: assignment.details || assignment.description || '',
@@ -861,7 +865,10 @@ function collectCalendarItems() {
   }));
 
   const edgenuityItems = (edgenuityState.assignments || []).filter((assignment) => !isDismissedAssignment(assignment)).map((assignment) => ({
+    id: assignment.id || assignment.courseNodeKey || assignment.objectKey || '',
+    name: assignment.name,
     title: assignment.name,
+    dueAt: assignment.dueAt,
     start: assignment.dueAt,
     source: 'edgenuity',
     courseName: assignment.courseName,
@@ -1613,15 +1620,18 @@ function saveTestNotificationSent() {
 }
 
 function dismissAssignment(assignment) {
-  const assignmentId = getPrimaryDismissKey(assignment);
-  if (!assignmentId) {
+  const assignmentKeys = getDismissKeys(assignment);
+  if (!assignmentKeys.length) {
     return;
   }
 
-  dismissedAssignments[assignmentId] = {
-    dismissedAt: new Date().toISOString(),
-    title: assignment.name || assignment.title || 'this item'
-  };
+  const dismissedAt = new Date().toISOString();
+  assignmentKeys.forEach((assignmentId) => {
+    dismissedAssignments[assignmentId] = {
+      dismissedAt: dismissedAt,
+      title: assignment.name || assignment.title || 'this item'
+    };
+  });
   localStorage.setItem(DISMISSED_ASSIGNMENTS_KEY, JSON.stringify(dismissedAssignments));
   renderCanvasAssignments();
   renderEdgenuityAssignments();
@@ -1775,7 +1785,9 @@ function buildGoogleCalendarItem(event) {
   const calendarName = event && event.calendarName ? event.calendarName : (googleCalendarState.calendarName || 'Google Calendar');
   return {
     id: (event && event.id) || [calendarName, event && event.title, event && event.start].filter(Boolean).join('|'),
+    name: event.title,
     title: event.title,
+    dueAt: event.start,
     start: event.start,
     end: event.end,
     source: 'google-calendar',
