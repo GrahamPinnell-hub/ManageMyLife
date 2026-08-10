@@ -815,7 +815,11 @@ async function syncGoogleCalendarEvents() {
     localStorage.setItem(GOOGLE_CALENDAR_EVENTS_KEY, JSON.stringify(googleCalendarState.events));
     localStorage.setItem(GOOGLE_CALENDAR_NAME_KEY, googleCalendarState.calendarName);
     renderCalendarView();
-    showCalendarStatus('Google Calendar synced.');
+    const syncedCalendars = Array.isArray(result.syncedCalendars) ? result.syncedCalendars : [];
+    const syncMessage = syncedCalendars.length
+      ? 'Google Calendar synced from ' + syncedCalendars.length + ' calendars.'
+      : 'Google Calendar synced.';
+    showCalendarStatus(syncMessage);
     notifyUpcomingTests(false);
   } catch (error) {
     showCalendarError(error && error.message ? error.message : String(error));
@@ -826,20 +830,7 @@ async function syncGoogleCalendarEvents() {
 
 function renderCalendarView() {
   const items = collectCalendarItems();
-  const googleItems = (googleCalendarState.events || []).map((event) => ({
-    title: event.title,
-    start: event.start,
-    end: event.end,
-    source: 'google-calendar',
-    courseName: googleCalendarState.calendarName || 'Google Calendar',
-    unitName: event.location || '',
-    lessonName: '',
-    itemType: event.allDay ? 'All day' : '',
-    description: event.description || '',
-    details: event.description || '',
-    htmlUrl: event.htmlUrl || 'https://calendar.google.com/calendar/u/0/r',
-    openLabel: event.openLabel || 'Open Google Calendar'
-  }));
+  const googleItems = (googleCalendarState.events || []).map(buildGoogleCalendarItem);
 
   els.calendarItemCount.textContent = items.length + (items.length === 1 ? ' item' : ' items');
   els.calendarNextItem.textContent = items.length ? buildCalendarHeadline(items[0]) : 'Nothing scheduled yet';
@@ -883,20 +874,7 @@ function collectCalendarItems() {
     openLabel: assignment.openLabel || 'Open in Edgenuity'
   }));
 
-  const googleItems = (googleCalendarState.events || []).map((event) => ({
-    title: event.title,
-    start: event.start,
-    end: event.end,
-    source: 'google-calendar',
-    courseName: googleCalendarState.calendarName || 'Google Calendar',
-    unitName: event.location || '',
-    lessonName: '',
-    itemType: event.allDay ? 'All day' : '',
-    description: event.description || '',
-    details: event.description || '',
-    htmlUrl: event.htmlUrl || '',
-    openLabel: event.openLabel || 'Open Google Calendar'
-  }));
+  const googleItems = (googleCalendarState.events || []).map(buildGoogleCalendarItem);
 
   return canvasItems.concat(edgenuityItems, googleItems)
     .filter((item) => item.start)
@@ -1736,6 +1714,37 @@ function renderAssignmentsByClass(assignments) {
   renderAssignmentsByGroup(els.canvasByClass, assignments, (assignment) => assignment.courseName || 'Canvas course', 'No class groups yet', 'Sync Canvas assignments to fill this area.');
 }
 
+function buildGoogleCalendarItem(event) {
+  const calendarName = event && event.calendarName ? event.calendarName : (googleCalendarState.calendarName || 'Google Calendar');
+  return {
+    title: event.title,
+    start: event.start,
+    end: event.end,
+    source: 'google-calendar',
+    sourceLabel: deriveGoogleCalendarSourceLabel(event, calendarName),
+    courseName: calendarName,
+    unitName: event.location || '',
+    lessonName: '',
+    itemType: event.allDay ? 'All day' : '',
+    description: event.description || '',
+    details: event.description || '',
+    htmlUrl: event.htmlUrl || 'https://calendar.google.com/calendar/u/0/r',
+    openLabel: event.openLabel || 'Open Google Calendar'
+  };
+}
+
+function deriveGoogleCalendarSourceLabel(event, calendarName) {
+  const signal = [event && event.calendarName, event && event.calendarId]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  if (signal.includes('tulsatech') || signal.includes('tulsa tech')) return 'Tulsa Tech';
+  if (signal.includes('bb.tulsacc.edu') || signal.includes('tulsacc') || signal.includes('tulsa community') || /\btcc\b/.test(signal)) return 'TCC';
+  if (signal.includes('jenks')) return 'Jenks';
+  return calendarName || 'Google Calendar';
+}
+
 function renderAssignmentsByGroup(container, assignments, keyFn, emptyTitle, emptyText) {
   container.innerHTML = '';
   if (!assignments.length) {
@@ -1778,7 +1787,7 @@ function buildAssignmentCard(assignment) {
   if (assignment.source) {
     const source = document.createElement('span');
     source.className = 'calendar-source ' + assignment.source;
-    source.textContent = formatSourceLabel(assignment.source);
+    source.textContent = assignment.sourceLabel || formatSourceLabel(assignment.source);
     row.appendChild(source);
   }
 
