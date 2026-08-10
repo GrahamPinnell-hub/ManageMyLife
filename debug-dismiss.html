@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f6c5d">
+    <title>ManageMyLife Debug Dismiss</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <script>
+      localStorage.setItem('manage-my-life-canvas-assignments', JSON.stringify([
+        {
+          id: 'canvas-debug-overdue-1',
+          name: '5/14 All Coursework Due',
+          dueAt: '2026-08-09T23:30:00.000Z',
+          courseName: '2(A) - U.S. History - Johnson - S2',
+          pointsPossible: 100,
+          htmlUrl: 'https://example.com/canvas-assignment',
+          openLabel: 'Open in Canvas'
+        }
+      ]));
+      localStorage.setItem('manage-my-life-edgenuity-assignments', JSON.stringify([]));
+      localStorage.setItem('manage-my-life-google-calendar-events', JSON.stringify([]));
+      localStorage.removeItem('manage-my-life-dismissed-assignments');
+    </script>
+    <script>
+      window.location.replace('./index.html#debug-calendar');
+    </script>
+  </body>
+</html>
