@@ -608,8 +608,19 @@ button:disabled {
 .calendar-day-head {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: flex-start;
+  flex-wrap: wrap;
   gap: 10px;
+}
+
+.calendar-day-title {
+  display: grid;
+  gap: 2px;
+}
+
+.calendar-day-dismiss-btn {
+  justify-self: end;
+  min-width: 0;
 }
 
 .calendar-source {

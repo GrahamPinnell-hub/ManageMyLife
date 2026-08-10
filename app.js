@@ -955,7 +955,20 @@ function renderCalendarDays(container, items, limitDays) {
     card.className = 'calendar-day';
     const head = document.createElement('div');
     head.className = 'calendar-day-head';
-    head.innerHTML = '<strong>' + escapeHtml(formatCalendarDayLabel(dayKey)) + '</strong><span class="mini">' + grouped[dayKey].length + (grouped[dayKey].length === 1 ? ' item' : ' items') + '</span>';
+    const titleWrap = document.createElement('div');
+    titleWrap.className = 'calendar-day-title';
+    titleWrap.innerHTML = '<strong>' + escapeHtml(formatCalendarDayLabel(dayKey)) + '</strong><span class="mini">' + grouped[dayKey].length + (grouped[dayKey].length === 1 ? ' item' : ' items') + '</span>';
+    head.appendChild(titleWrap);
+
+    const dismissCandidates = getCalendarDayDismissCandidates(grouped[dayKey]);
+    if (dismissCandidates.length) {
+      const dismissDayButton = document.createElement('button');
+      dismissDayButton.type = 'button';
+      dismissDayButton.className = 'btn ghost dismiss-btn calendar-day-dismiss-btn';
+      dismissDayButton.textContent = dismissCandidates.length === 1 ? 'Dismiss overdue item' : 'Dismiss overdue day (' + dismissCandidates.length + ')';
+      dismissDayButton.addEventListener('click', () => requestDismissDayConfirmation(dismissDayButton, dismissCandidates, dayKey));
+      head.appendChild(dismissDayButton);
+    }
     card.appendChild(head);
 
     grouped[dayKey].forEach((item) => {
@@ -968,6 +981,33 @@ function renderCalendarDays(container, items, limitDays) {
 
 function buildCalendarHeadline(item) {
   return item.title + ' on ' + formatDueDate(item.start);
+}
+
+function getCalendarDayDismissCandidates(items) {
+  return dedupeDismissCandidates((Array.isArray(items) ? items : []).filter((item) => {
+    return item
+      && item.source !== 'google-calendar'
+      && !isDismissedAssignment(item)
+      && getAssignmentBucket(item) === 'overdue';
+  }));
+}
+
+function requestDismissDayConfirmation(button, items, dayKey) {
+  const candidates = getCalendarDayDismissCandidates(items);
+  if (!candidates.length) {
+    showDismissStatus('No overdue school items left in that day.');
+    return;
+  }
+
+  requestButtonConfirmation(button, {
+    prompt: 'Tap again to hide ' + candidates.length + ' overdue school item' + (candidates.length === 1 ? '' : 's') + ' for ' + formatCalendarDayLabel(dayKey) + '.',
+    onConfirm: () => {
+      const count = dismissAssignments(candidates, { silent: true });
+      showDismissStatus(count === 1
+        ? '1 overdue item hidden for ' + formatCalendarDayLabel(dayKey) + '.'
+        : count + ' overdue items hidden for ' + formatCalendarDayLabel(dayKey) + '.');
+    }
+  });
 }
 
 
