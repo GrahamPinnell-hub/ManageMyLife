@@ -830,7 +830,7 @@ async function syncGoogleCalendarEvents() {
 
 function renderCalendarView() {
   const items = collectCalendarItems();
-  const googleItems = (googleCalendarState.events || []).map(buildGoogleCalendarItem);
+  const googleItems = (googleCalendarState.events || []).map(buildGoogleCalendarItem).filter((item) => !isDismissedAssignment(item));
 
   els.calendarItemCount.textContent = items.length + (items.length === 1 ? ' item' : ' items');
   els.calendarNextItem.textContent = items.length ? buildCalendarHeadline(items[0]) : 'Nothing scheduled yet';
@@ -874,7 +874,7 @@ function collectCalendarItems() {
     openLabel: assignment.openLabel || 'Open in Edgenuity'
   }));
 
-  const googleItems = (googleCalendarState.events || []).map(buildGoogleCalendarItem);
+  const googleItems = (googleCalendarState.events || []).map(buildGoogleCalendarItem).filter((item) => !isDismissedAssignment(item));
 
   return canvasItems.concat(edgenuityItems, googleItems)
     .filter((item) => item.start)
@@ -1654,8 +1654,8 @@ function getDismissKeys(assignment) {
     }
   };
 
-  addKey(assignment && assignment.htmlUrl);
   addKey(assignment && assignment.id);
+  addKey(assignment && assignment.htmlUrl);
   addKey(((assignment && assignment.courseName) || '') + '|' + ((assignment && (assignment.name || assignment.title)) || '') + '|' + ((assignment && (assignment.dueAt || assignment.start)) || ''));
   return keys;
 }
@@ -1774,6 +1774,7 @@ function renderAssignmentsByClass(assignments) {
 function buildGoogleCalendarItem(event) {
   const calendarName = event && event.calendarName ? event.calendarName : (googleCalendarState.calendarName || 'Google Calendar');
   return {
+    id: (event && event.id) || [calendarName, event && event.title, event && event.start].filter(Boolean).join('|'),
     title: event.title,
     start: event.start,
     end: event.end,
