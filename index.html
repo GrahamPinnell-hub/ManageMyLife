@@ -233,6 +233,20 @@
             </div>
             <div class="entries compact-entries" id="schoolDismissedList"></div>
           </details>
+
+          <details class="compact-details dismiss-policy-panel">
+            <summary>Auto-hide old overdue work</summary>
+            <p class="mini">This only hides Canvas and Edgenuity items on this device after they have been overdue for a while.</p>
+            <label class="field">Auto-hide after
+              <select id="schoolAutoDismissDays">
+                <option value="0">Off</option>
+                <option value="3">3 days overdue</option>
+                <option value="7">7 days overdue</option>
+                <option value="14">14 days overdue</option>
+              </select>
+            </label>
+            <p class="mini" id="schoolAutoDismissSummary">Auto-hide is off.</p>
+          </details>
         </div>
 
         <div class="control-box notification-box section-gap">
@@ -584,11 +598,12 @@
         </div>
 
         <div class="school-block">
-          <div class="section-head compact-head">
+          <div class="section-head compact-head calendar-today-head">
             <div>
               <h3>Today</h3>
               <p class="mini">What is due or happening today.</p>
             </div>
+            <button class="btn ghost dismiss-btn" id="dismissCalendarTodayBtn" type="button">Dismiss school items in Today</button>
           </div>
           <div class="entries" id="calendarToday"></div>
         </div>

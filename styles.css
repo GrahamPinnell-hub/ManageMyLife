@@ -119,6 +119,13 @@ h3 {
   gap: 6px;
 }
 
+.calendar-today-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
 .hero-stats,
 .totals-stack,
 .school-summary-grid {

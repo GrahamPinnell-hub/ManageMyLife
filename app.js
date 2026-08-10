@@ -10,6 +10,7 @@ const GOOGLE_CALENDAR_EVENTS_KEY = 'manage-my-life-google-calendar-events';
 const GOOGLE_CALENDAR_NAME_KEY = 'manage-my-life-google-calendar-name';
 const DISMISSED_ASSIGNMENTS_KEY = 'manage-my-life-dismissed-assignments';
 const LAST_DISMISSED_KEY = 'manage-my-life-last-dismissed';
+const AUTO_DISMISS_SETTINGS_KEY = 'manage-my-life-auto-dismiss-settings';
 const TEST_NOTIFICATION_SETTINGS_KEY = 'manage-my-life-test-notification-settings';
 const TEST_NOTIFICATION_SENT_KEY = 'manage-my-life-test-notification-sent';
 const TEST_CLASS_RULES_KEY = 'manage-my-life-test-class-rules';
@@ -208,6 +209,8 @@ const els = {
   schoolDismissedCount: document.getElementById('schoolDismissedCount'),
   restoreSchoolDismissedBtn: document.getElementById('restoreSchoolDismissedBtn'),
   schoolDismissedList: document.getElementById('schoolDismissedList'),
+  schoolAutoDismissDays: document.getElementById('schoolAutoDismissDays'),
+  schoolAutoDismissSummary: document.getElementById('schoolAutoDismissSummary'),
   enableTestNotificationsBtn: document.getElementById('enableTestNotificationsBtn'),
   sendTestNotificationBtn: document.getElementById('sendTestNotificationBtn'),
   testNotificationStatus: document.getElementById('testNotificationStatus'),
@@ -266,6 +269,7 @@ const els = {
   calendarNextItem: document.getElementById('calendarNextItem'),
   googleCalendarPreview: document.getElementById('googleCalendarPreview'),
   openGoogleCalendarLink: document.getElementById('openGoogleCalendarLink'),
+  dismissCalendarTodayBtn: document.getElementById('dismissCalendarTodayBtn'),
   calendarToday: document.getElementById('calendarToday'),
   calendarWeek: document.getElementById('calendarWeek'),
   schoolSection: document.getElementById('schoolSection'),
@@ -371,6 +375,7 @@ const canvasInboxState = {
 
 const dismissedAssignments = loadDismissedAssignments();
 let lastDismissedState = loadLastDismissedState();
+const autoDismissSettings = loadAutoDismissSettings();
 const testNotificationState = {
   settings: loadTestNotificationSettings(),
   sent: loadTestNotificationSent(),
@@ -445,6 +450,8 @@ function wireButtons() {
   if (els.dismissCalendarOverdueBtn) els.dismissCalendarOverdueBtn.addEventListener('click', () => requestBulkDismissConfirmation(els.dismissCalendarOverdueBtn, 'calendar'));
   if (els.restoreSchoolDismissedBtn) els.restoreSchoolDismissedBtn.addEventListener('click', () => requestRestoreAllConfirmation(els.restoreSchoolDismissedBtn, 'school'));
   if (els.restoreCalendarDismissedBtn) els.restoreCalendarDismissedBtn.addEventListener('click', () => requestRestoreAllConfirmation(els.restoreCalendarDismissedBtn, 'calendar'));
+  if (els.dismissCalendarTodayBtn) els.dismissCalendarTodayBtn.addEventListener('click', () => requestDismissTodayConfirmation(els.dismissCalendarTodayBtn, getCalendarTodayDismissCandidates(getCalendarTodayItems())));
+  if (els.schoolAutoDismissDays) els.schoolAutoDismissDays.addEventListener('change', updateAutoDismissDays);
   if (els.enableTestNotificationsBtn) els.enableTestNotificationsBtn.addEventListener('click', enableTestNotifications);
   if (els.sendTestNotificationBtn) els.sendTestNotificationBtn.addEventListener('click', sendManualTestNotification);
   if (els.saveTestRuleBtn) els.saveTestRuleBtn.addEventListener('click', saveCustomTestRule);
@@ -847,6 +854,7 @@ async function syncGoogleCalendarEvents() {
 }
 
 function renderCalendarView() {
+  applyAutoDismissPolicy();
   const items = collectCalendarItems();
   const googleItems = (googleCalendarState.events || []).map(buildGoogleCalendarItem).filter((item) => !isDismissedAssignment(item));
 
@@ -857,8 +865,9 @@ function renderCalendarView() {
   }
 
   renderCalendarList(els.googleCalendarPreview, googleItems.slice(0, 3), 'Sync Google Calendar to see events here.');
-  const todayItems = items.filter((item) => isSameDay(item.start, new Date()));
+  const todayItems = getCalendarTodayItems(items);
   renderCalendarList(els.calendarToday, todayItems, 'Nothing on the calendar today.');
+  updateCalendarTodayDismissButton(todayItems);
   renderCalendarDays(els.calendarWeek, items, 7);
   renderDismissManagement();
   refreshTestNotificationStatus();
@@ -983,6 +992,47 @@ function buildCalendarHeadline(item) {
   return item.title + ' on ' + formatDueDate(item.start);
 }
 
+function getCalendarTodayItems(items) {
+  const list = Array.isArray(items) ? items : collectCalendarItems();
+  return list.filter((item) => isSameDay(item.start, new Date()));
+}
+
+function getCalendarTodayDismissCandidates(items) {
+  return dedupeDismissCandidates((Array.isArray(items) ? items : []).filter((item) => {
+    return item
+      && item.source !== 'google-calendar'
+      && !isDismissedAssignment(item);
+  }));
+}
+
+function updateCalendarTodayDismissButton(items) {
+  if (!els.dismissCalendarTodayBtn) {
+    return;
+  }
+
+  const candidates = getCalendarTodayDismissCandidates(items);
+  els.dismissCalendarTodayBtn.disabled = !candidates.length;
+  els.dismissCalendarTodayBtn.textContent = candidates.length
+    ? (candidates.length === 1 ? 'Dismiss Today school item' : 'Dismiss Today school items (' + candidates.length + ')')
+    : 'Dismiss school items in Today';
+}
+
+function requestDismissTodayConfirmation(button, items) {
+  const candidates = getCalendarTodayDismissCandidates(items);
+  if (!candidates.length) {
+    showDismissStatus('No school items left in Today to hide.');
+    return;
+  }
+
+  requestButtonConfirmation(button, {
+    prompt: 'Tap again to hide ' + candidates.length + ' school item' + (candidates.length === 1 ? '' : 's') + ' from Today.',
+    onConfirm: () => {
+      const count = dismissAssignments(candidates, { silent: true });
+      showDismissStatus(count === 1 ? '1 Today school item hidden.' : count + ' Today school items hidden.');
+    }
+  });
+}
+
 function getCalendarDayDismissCandidates(items) {
   return dedupeDismissCandidates((Array.isArray(items) ? items : []).filter((item) => {
     return item
@@ -1008,6 +1058,60 @@ function requestDismissDayConfirmation(button, items, dayKey) {
         : count + ' overdue items hidden for ' + formatCalendarDayLabel(dayKey) + '.');
     }
   });
+}
+
+function applyAutoDismissPolicy() {
+  const days = Number(autoDismissSettings.days) || 0;
+  if (days <= 0) {
+    return 0;
+  }
+
+  const candidates = dedupeDismissCandidates((canvasState.assignments || [])
+    .concat(edgenuityState.assignments || [])
+    .filter((assignment) => {
+      return assignment
+        && !isDismissedAssignment(assignment)
+        && getAssignmentBucket(assignment) === 'overdue'
+        && getOverdueAgeInDays(assignment.dueAt || assignment.start) >= days;
+    }));
+
+  if (!candidates.length) {
+    return 0;
+  }
+
+  return dismissAssignments(candidates, {
+    silent: true,
+    trackLastDismiss: false,
+    skipRerender: true,
+    hiddenReason: 'auto'
+  });
+}
+
+function getOverdueAgeInDays(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return 0;
+  }
+  const dueDayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diffMs = todayStart.getTime() - dueDayStart.getTime();
+  return Math.max(0, Math.floor(diffMs / (24 * 60 * 60 * 1000)));
+}
+
+function updateAutoDismissDays() {
+  const days = Number(els.schoolAutoDismissDays && els.schoolAutoDismissDays.value) || 0;
+  autoDismissSettings.days = days;
+  saveAutoDismissSettings();
+  const autoHidden = applyAutoDismissPolicy();
+  rerenderDismissViews();
+  if (days <= 0) {
+    showDismissStatus('Auto-hide for old overdue work is off.');
+    return;
+  }
+  showDismissStatus(autoHidden
+    ? autoHidden + ' old overdue item' + (autoHidden === 1 ? ' was' : 's were') + ' auto-hidden.'
+    : 'Auto-hide will hide school work after it is ' + days + ' day' + (days === 1 ? '' : 's') + ' overdue.');
 }
 
 
@@ -1712,7 +1816,7 @@ function dismissAssignments(assignments, options) {
     if (!assignmentKeys.length) {
       return;
     }
-    const record = createDismissRecord(assignment, assignmentKeys, dismissedAt);
+    const record = createDismissRecord(assignment, assignmentKeys, dismissedAt, options);
     record.restoreKeys.forEach((assignmentId) => {
       dismissedAssignments[assignmentId] = { ...record };
     });
@@ -1723,13 +1827,17 @@ function dismissAssignments(assignments, options) {
     return 0;
   }
 
-  lastDismissedState = {
-    dismissedAt: dismissedAt,
-    records: records.map((record) => ({ ...record }))
-  };
-  saveLastDismissedState();
+  if (!(options && options.trackLastDismiss === false)) {
+    lastDismissedState = {
+      dismissedAt: dismissedAt,
+      records: records.map((record) => ({ ...record }))
+    };
+    saveLastDismissedState();
+  }
   saveDismissedAssignments();
-  rerenderDismissViews();
+  if (!(options && options.skipRerender)) {
+    rerenderDismissViews();
+  }
 
   if (!(options && options.silent)) {
     showDismissStatus((options && options.statusMessage) || (records.length === 1 ? 'Item dismissed on this device.' : records.length + ' items dismissed on this device.'));
@@ -1931,7 +2039,7 @@ function rerenderDismissViews() {
   refreshTestNotificationStatus();
 }
 
-function createDismissRecord(assignment, assignmentKeys, dismissedAt) {
+function createDismissRecord(assignment, assignmentKeys, dismissedAt, options) {
   const source = String((assignment && assignment.source) || 'assignment');
   const fingerprint = buildDismissSharedFingerprint(assignment) || normalizeDismissText((assignment && (assignment.name || assignment.title)) || '');
   const recordId = [source, fingerprint || normalizeDismissText((assignment && assignment.id) || ''), normalizeDismissText((assignment && (assignment.dueAt || assignment.start)) || '')]
@@ -1946,6 +2054,7 @@ function createDismissRecord(assignment, assignmentKeys, dismissedAt) {
     courseName: assignment.courseName || '',
     dueAt: assignment.dueAt || assignment.start || '',
     fingerprint: fingerprint,
+    hiddenReason: (options && options.hiddenReason) || 'manual',
     restoreKeys: assignmentKeys.slice()
   };
 }
@@ -1977,6 +2086,7 @@ function normalizeDismissedRecord(key, rawRecord) {
     courseName: record.courseName || '',
     dueAt: record.dueAt || '',
     fingerprint: record.fingerprint || '',
+    hiddenReason: record.hiddenReason || 'manual',
     restoreKeys: restoreKeys
   };
 }
@@ -2005,6 +2115,9 @@ function getDismissedEntries(filterFn) {
     }
     if (!grouped[record.recordId].dueAt && record.dueAt) {
       grouped[record.recordId].dueAt = record.dueAt;
+    }
+    if (grouped[record.recordId].hiddenReason !== 'auto' && record.hiddenReason === 'auto') {
+      grouped[record.recordId].hiddenReason = record.hiddenReason;
     }
   });
 
@@ -2049,6 +2162,7 @@ function dedupeDismissCandidates(assignments) {
 }
 
 function renderDismissManagement() {
+  renderAutoDismissControls();
   renderDismissPanel({
     countEl: els.schoolDismissedCount,
     listEl: els.schoolDismissedList,
@@ -2125,7 +2239,7 @@ function buildDismissedEntryCard(record, restoreLabel) {
 
   const meta = document.createElement('span');
   meta.className = 'assignment-meta';
-  meta.textContent = [record.courseName, record.dueAt ? 'Due ' + formatDueDate(record.dueAt) : '', record.dismissedAt ? 'Hidden ' + formatDueDate(record.dismissedAt) : '']
+  meta.textContent = [record.courseName, record.dueAt ? 'Due ' + formatDueDate(record.dueAt) : '', record.hiddenReason === 'auto' ? 'Auto-hidden' : '', record.dismissedAt ? 'Hidden ' + formatDueDate(record.dismissedAt) : '']
     .filter(Boolean)
     .join(' | ');
   row.appendChild(meta);
@@ -2150,7 +2264,20 @@ function buildDismissedEntryCard(record, restoreLabel) {
   return card;
 }
 
+function renderAutoDismissControls() {
+  if (els.schoolAutoDismissDays) {
+    els.schoolAutoDismissDays.value = String(Number(autoDismissSettings.days) || 0);
+  }
+  if (els.schoolAutoDismissSummary) {
+    const days = Number(autoDismissSettings.days) || 0;
+    els.schoolAutoDismissSummary.textContent = days > 0
+      ? 'Old overdue school work will auto-hide after ' + days + ' day' + (days === 1 ? '' : 's') + ' overdue.'
+      : 'Auto-hide is off.';
+  }
+}
+
 function renderCanvasAssignments() {
+  applyAutoDismissPolicy();
   const assignments = (Array.isArray(canvasState.assignments) ? canvasState.assignments : [])
     .map((item) => ({ ...item, source: item.source || 'canvas', openLabel: item.openLabel || 'Open in Canvas' }))
     .filter((item) => !isDismissedAssignment(item));
@@ -2177,6 +2304,7 @@ function renderCanvasAssignments() {
 }
 
 function renderEdgenuityAssignments() {
+  applyAutoDismissPolicy();
   const assignments = (Array.isArray(edgenuityState.assignments) ? edgenuityState.assignments : [])
     .map((item) => ({ ...item, source: item.source || 'edgenuity', openLabel: item.openLabel || 'Open in Edgenuity' }))
     .filter((item) => !isDismissedAssignment(item));
@@ -2457,6 +2585,21 @@ function saveLastDismissedState() {
 function clearLastDismissedState() {
   lastDismissedState = null;
   localStorage.removeItem(LAST_DISMISSED_KEY);
+}
+
+function loadAutoDismissSettings() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(AUTO_DISMISS_SETTINGS_KEY) || 'null') || {};
+    return {
+      days: Number(stored.days) || 0
+    };
+  } catch (error) {
+    return { days: 0 };
+  }
+}
+
+function saveAutoDismissSettings() {
+  localStorage.setItem(AUTO_DISMISS_SETTINGS_KEY, JSON.stringify(autoDismissSettings));
 }
 
 function toLocalDayKey(value) {
