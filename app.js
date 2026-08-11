@@ -2423,15 +2423,56 @@ function renderAssignmentsByGroup(container, assignments, keyFn, emptyTitle, emp
   Object.keys(grouped).sort().forEach((groupName) => {
     const wrap = document.createElement('div');
     wrap.className = 'class-card';
+    const head = document.createElement('div');
+    head.className = 'class-card-head';
     const title = document.createElement('strong');
     title.textContent = groupName;
-    wrap.appendChild(title);
+    head.appendChild(title);
 
-    grouped[groupName].slice(0, 6).forEach((assignment) => {
+    const groupItems = grouped[groupName];
+    const dismissGroupButton = buildDismissGroupButton(groupItems, groupName);
+    if (dismissGroupButton) {
+      head.appendChild(dismissGroupButton);
+    }
+    wrap.appendChild(head);
+
+    groupItems.slice(0, 6).forEach((assignment) => {
       wrap.appendChild(buildAssignmentCard(assignment));
     });
 
     container.appendChild(wrap);
+  });
+}
+
+function buildDismissGroupButton(items, groupName) {
+  const candidates = dedupeDismissCandidates((Array.isArray(items) ? items : []).filter((assignment) => assignment && !isDismissedAssignment(assignment)));
+  if (!candidates.length) {
+    return null;
+  }
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'btn ghost dismiss-btn class-group-dismiss-btn';
+  button.textContent = candidates.length === 1 ? 'Dismiss item' : 'Dismiss group (' + candidates.length + ')';
+  button.addEventListener('click', () => requestDismissGroupConfirmation(button, candidates, groupName));
+  return button;
+}
+
+function requestDismissGroupConfirmation(button, items, groupName) {
+  const candidates = dedupeDismissCandidates((Array.isArray(items) ? items : []).filter((assignment) => assignment && !isDismissedAssignment(assignment)));
+  if (!candidates.length) {
+    showDismissStatus('No visible items left in ' + groupName + '.');
+    return;
+  }
+
+  requestButtonConfirmation(button, {
+    prompt: 'Tap again to hide ' + candidates.length + ' item' + (candidates.length === 1 ? '' : 's') + ' from ' + groupName + '.',
+    onConfirm: () => {
+      const count = dismissAssignments(candidates, { silent: true });
+      showDismissStatus(count === 1
+        ? '1 item hidden from ' + groupName + '.'
+        : count + ' items hidden from ' + groupName + '.');
+    }
   });
 }
 

@@ -206,6 +206,18 @@ h3 {
   font-size: 0.95rem;
 }
 
+.class-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.class-group-dismiss-btn {
+  min-width: 0;
+}
+
 label {
   display: grid;
   gap: 8px;
